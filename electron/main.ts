@@ -9,7 +9,7 @@ const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL as string | undefine
 
 // 更新检查 URL（可配置，默认使用 GitHub Releases API 格式）
 // 实际发布时替换为真实的版本检查地址
-const UPDATE_CHECK_URL = 'https://api.github.com/repos/chillpass/chillpass/releases/latest'
+const UPDATE_CHECK_URL = 'https://api.github.com/repos/Koipoppy/ChillPass/releases/latest'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -140,10 +140,16 @@ ipcMain.handle('app:getVersion', () => {
 
 // ===== 更新检查 =====
 
+/** 从任意 tag 字符串中提取纯语义化版本号（如 "1.0.0"） */
+function extractSemver(tag: string): string {
+  const match = tag.match(/(\d+\.\d+\.\d+)/)
+  return match ? match[1] : '0.0.0'
+}
+
 /** 比较语义化版本号：返回 1 表示 v1 > v2，-1 表示 v1 < v2，0 表示相等 */
 function compareVersions(v1: string, v2: string): number {
-  const parts1 = v1.replace(/^v/, '').split('.').map(Number)
-  const parts2 = v2.replace(/^v/, '').split('.').map(Number)
+  const parts1 = extractSemver(v1).split('.').map(Number)
+  const parts2 = extractSemver(v2).split('.').map(Number)
   for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
     const a = parts1[i] || 0
     const b = parts2[i] || 0
@@ -192,8 +198,10 @@ ipcMain.handle('update:check', async () => {
     const release = await fetchJson(UPDATE_CHECK_URL)
 
     // GitHub Releases API 返回格式
-    const latestVersion = release.tag_name ? release.tag_name.replace(/^v/, '') : '0.0.0'
-    const downloadUrl = release.html_url || release.assets?.[0]?.browser_download_url || ''
+    const latestVersion = release.tag_name || '0.0.0'
+    // 优先使用 exe 安装器的直接下载链接，其次使用 Release 页面
+    const exeAsset = release.assets?.find((a: any) => a.name.endsWith('.exe') && !a.name.endsWith('.blockmap'))
+    const downloadUrl = exeAsset?.browser_download_url || release.html_url || ''
     const releaseNotes = release.body || '暂无更新说明'
     const releaseDate = release.published_at || new Date().toISOString()
 
