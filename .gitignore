@@ -1,0 +1,33 @@
+# 依赖
+node_modules/
+
+# 构建产物
+dist/
+dist-electron/
+
+# electron-builder 打包输出
+release/
+
+# TypeScript 增量编译缓存
+*.tsbuildinfo
+
+# 系统文件
+Thumbs.db
+.DS_Store
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# 日志
+*.log
+npm-debug.log*
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Windows 拼写检查缓存（乱码目录）

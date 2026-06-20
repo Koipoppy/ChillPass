@@ -1,0 +1,261 @@
+/* ========================================
+   ChillPass 全局样式
+   正版液态玻璃设计系统 v5.0
+   ======================================== */
+
+:root {
+  /* 白色基底 */
+  --bg-base: #f5f5f7;
+  --bg-surface: #ffffff;
+  --bg-elevated: #fafafa;
+
+  /* 液态玻璃材质 — clear 变体 */
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-bg-hover: rgba(255, 255, 255, 0.7);
+  --glass-bg-active: rgba(255, 255, 255, 0.85);
+
+  /* 文字 */
+  --text-primary: #1d1d1f;
+  --text-secondary: rgba(29, 29, 31, 0.6);
+  --text-tertiary: rgba(29, 29, 31, 0.38);
+  --text-quaternary: rgba(29, 29, 31, 0.22);
+
+  /* 强调色（仅文字） */
+  --accent-text: #0071e3;
+  --success-text: #34c759;
+  --warning-text: #ff9f0a;
+  --danger-text: #ff3b30;
+
+  /* 圆角 */
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-pill: 980px;
+
+  /* 阴影 */
+  --shadow-ambient: 0 1px 3px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-float: 0 2px 8px rgba(0, 0, 0, 0.05), 0 12px 40px rgba(0, 0, 0, 0.08);
+  --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.06), 0 20px 56px rgba(0, 0, 0, 0.1);
+
+  /* 侧边栏宽度 */
+  --sidebar-width: 260px;
+}
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
+  color: var(--text-primary);
+  line-height: 1.47;
+  letter-spacing: -0.022em;
+  min-height: 100vh;
+  overflow: hidden;
+  background: var(--bg-base);
+  user-select: none;
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ===== 灰度波动背景 ===== */
+.bg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+  background: var(--bg-base);
+  overflow: hidden;
+}
+
+.bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  will-change: transform, opacity;
+}
+.bg-blob-1 {
+  width: 800px; height: 800px;
+  background: radial-gradient(circle, rgba(0,0,0,0.06), transparent 70%);
+  top: -20%; left: -15%;
+  animation: drift1 22s ease-in-out infinite;
+}
+.bg-blob-2 {
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(0,0,0,0.04), transparent 70%);
+  top: 25%; right: -20%;
+  animation: drift2 28s ease-in-out infinite;
+}
+.bg-blob-3 {
+  width: 750px; height: 750px;
+  background: radial-gradient(circle, rgba(0,0,0,0.05), transparent 70%);
+  bottom: -20%; left: 20%;
+  animation: drift3 32s ease-in-out infinite;
+}
+.bg-blob-4 {
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(0,0,0,0.03), transparent 70%);
+  top: 50%; left: 45%;
+  animation: drift4 24s ease-in-out infinite;
+}
+.bg-blob-light-1 {
+  width: 900px; height: 900px;
+  background: radial-gradient(circle, rgba(255,255,255,0.8), transparent 60%);
+  top: 10%; right: 10%;
+  animation: drift1 30s ease-in-out infinite reverse;
+}
+.bg-blob-light-2 {
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(255,255,255,0.6), transparent 60%);
+  bottom: 5%; left: 5%;
+  animation: drift3 26s ease-in-out infinite reverse;
+}
+
+@keyframes drift1 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+  33% { transform: translate(80px, -60px) scale(1.15); opacity: 1; }
+  66% { transform: translate(-50px, 70px) scale(0.9); opacity: 0.5; }
+}
+@keyframes drift2 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.6; }
+  50% { transform: translate(-100px, 80px) scale(1.2); opacity: 0.9; }
+}
+@keyframes drift3 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+  40% { transform: translate(70px, -50px) scale(1.1); opacity: 0.8; }
+  80% { transform: translate(-60px, 40px) scale(0.95); opacity: 0.4; }
+}
+@keyframes drift4 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.6; }
+  25% { transform: translate(-70px, -40px) scale(1.1); opacity: 0.9; }
+  75% { transform: translate(60px, 50px) scale(0.9); opacity: 0.4; }
+}
+
+.bg-noise {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.025;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ===== 液态玻璃核心类 ===== */
+.liquid-glass {
+  position: relative;
+  background: var(--glass-bg);
+  backdrop-filter: url(#liquidGlassRefraction) blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid transparent;
+  box-shadow: var(--shadow-ambient);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow: hidden;
+}
+.liquid-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg,
+    rgba(255,255,255,0.95) 0%,
+    rgba(255,255,255,0.4) 30%,
+    rgba(0,0,0,0.02) 50%,
+    rgba(0,0,0,0.05) 70%,
+    rgba(255,255,255,0.3) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+.liquid-glass::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 60%;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255,255,255,0.25), transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+.liquid-glass:hover {
+  background: var(--glass-bg-hover);
+  box-shadow: var(--shadow-hover);
+}
+.liquid-glass > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* ===== 滚动条 ===== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* ===== 通用动画 ===== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.08); }
+  50% { box-shadow: 0 0 0 1px rgba(0,0,0,0.08), 0 6px 24px rgba(0,0,0,0.12); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.fade-in { animation: fadeIn 0.4s ease-out; }
+.slide-in { animation: slideIn 0.3s ease-out; }
+
+/* ===== 加载动画 ===== */
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-top-color: var(--text-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.shimmer-bg {
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.4) 0%,
+    rgba(255,255,255,0.7) 50%,
+    rgba(255,255,255,0.4) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
