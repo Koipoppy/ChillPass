@@ -195,6 +195,12 @@ export interface ElectronAPI {
   windowClose: () => void
   windowIsMaximized: () => Promise<boolean>
   onWindowMaximizeChange: (callback: (isMaximized: boolean) => void) => void
+  // 专注模式
+  enterFocusMode: () => void
+  exitFocusMode: () => void
+  focusExitConfirm: () => void
+  isFullScreen: () => Promise<boolean>
+  onFocusExited: (callback: () => void) => () => void
   platform: string
   // 应用版本
   getAppVersion: () => Promise<string>

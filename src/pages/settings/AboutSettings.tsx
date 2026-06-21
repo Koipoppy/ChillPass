@@ -7,6 +7,10 @@ import {
   Download,
   AlertCircle,
   Loader,
+  Users,
+  MessageCircle,
+  Copy,
+  Check,
 } from 'lucide-react'
 import type { UpdateInfo, UpdateStatus } from '@types/index'
 import styles from './SettingsSub.module.css'
@@ -18,6 +22,14 @@ export default function AboutSettings() {
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('idle')
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
+  const [copied, setCopied] = useState(false)
+
+  const handleCopyWechat = () => {
+    navigator.clipboard.writeText('Eikawa_Koi').then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }).catch(() => {})
+  }
 
   // 获取应用版本
   useEffect(() => {
@@ -161,6 +173,40 @@ export default function AboutSettings() {
             </div>
           </div>
         )}
+      </section>
+
+      {/* 加入我们 */}
+      <section className={`liquid-glass ${styles.card}`}>
+        <div className={styles.cardHeader}>
+          <h2 className={styles.cardTitle}>加入我们</h2>
+          <p className={styles.cardDesc}>添加开发者微信，交流反馈或参与项目共建</p>
+        </div>
+
+        <div className={styles.infoRow}>
+          <span className={styles.infoLabel}>微信号</span>
+          <span className={styles.infoValue} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <MessageCircle size={16} strokeWidth={2} />
+            Eikawa_Koi
+            <button
+              type="button"
+              className={styles.primaryBtn}
+              onClick={handleCopyWechat}
+              style={{ marginLeft: 8, padding: '6px 14px', fontSize: 13 }}
+            >
+              {copied ? (
+                <>
+                  <Check size={14} strokeWidth={2} />
+                  已复制
+                </>
+              ) : (
+                <>
+                  <Copy size={14} strokeWidth={2} />
+                  复制
+                </>
+              )}
+            </button>
+          </span>
+        </div>
       </section>
     </div>
   )

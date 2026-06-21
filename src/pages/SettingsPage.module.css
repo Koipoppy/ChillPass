@@ -433,3 +433,122 @@
   flex-shrink: 0;
   color: var(--text-tertiary);
 }
+
+/* ===== 外观与语言 ===== */
+.appearanceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.appearanceLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.themeToggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.themeOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.themeOption:hover {
+  color: var(--text-primary);
+}
+
+.themeOptionActive {
+  background: var(--text-primary);
+  color: #fff;
+}
+
+.themeOptionActive:hover {
+  color: #fff;
+}
+
+.langGrid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.langOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-pill);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.langOption:hover {
+  background: var(--glass-bg-hover);
+  color: var(--text-primary);
+  border-color: rgba(0, 0, 0, 0.16);
+}
+
+.langOptionActive {
+  background: var(--accent-text);
+  color: #fff;
+  border-color: transparent;
+}
+
+.langOptionActive:hover {
+  background: var(--accent-text);
+  color: #fff;
+  filter: brightness(1.08);
+}
+
+.langFlag {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.langLabel {
+  letter-spacing: -0.01em;
+}
+
+/* ===== 暗色模式 ===== */
+[data-theme="dark"] .themeToggle {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .langOption {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .langOption:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}

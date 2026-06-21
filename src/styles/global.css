@@ -42,6 +42,26 @@
   --sidebar-width: 260px;
 }
 
+[data-theme="dark"] {
+  --bg-base: #1a1a1c;
+  --bg-surface: #2c2c2e;
+  --bg-elevated: #3a3a3c;
+  --glass-bg: rgba(58, 58, 60, 0.6);
+  --glass-bg-hover: rgba(72, 72, 74, 0.7);
+  --glass-bg-active: rgba(86, 86, 88, 0.8);
+  --text-primary: #f5f5f7;
+  --text-secondary: rgba(245, 245, 247, 0.6);
+  --text-tertiary: rgba(245, 245, 247, 0.38);
+  --text-quaternary: rgba(245, 245, 247, 0.22);
+  --accent-text: #0a84ff;
+  --success-text: #30d158;
+  --warning-text: #ffd60a;
+  --danger-text: #ff453a;
+  --shadow-ambient: 0 1px 3px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.4);
+  --shadow-float: 0 2px 8px rgba(0,0,0,0.3), 0 12px 40px rgba(0,0,0,0.5);
+  --shadow-hover: 0 4px 12px rgba(0,0,0,0.3), 0 20px 56px rgba(0,0,0,0.6);
+}
+
 *, *::before, *::after {
   margin: 0;
   padding: 0;
@@ -262,4 +282,45 @@ body {
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
+}
+
+/* ===== 暗色模式覆盖 ===== */
+[data-theme="dark"] .bg-blob-1 {
+  background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 70%);
+}
+[data-theme="dark"] .bg-blob-2 {
+  background: radial-gradient(circle, rgba(255,255,255,0.05), transparent 70%);
+}
+[data-theme="dark"] .bg-blob-3 {
+  background: radial-gradient(circle, rgba(255,255,255,0.06), transparent 70%);
+}
+[data-theme="dark"] .bg-blob-4 {
+  background: radial-gradient(circle, rgba(255,255,255,0.04), transparent 70%);
+}
+[data-theme="dark"] .bg-blob-light-1 {
+  background: radial-gradient(circle, rgba(255,255,255,0.06), transparent 60%);
+}
+[data-theme="dark"] .bg-blob-light-2 {
+  background: radial-gradient(circle, rgba(255,255,255,0.04), transparent 60%);
+}
+
+[data-theme="dark"] .liquid-glass::before {
+  background: linear-gradient(135deg,
+    rgba(255,255,255,0.18) 0%,
+    rgba(255,255,255,0.08) 30%,
+    rgba(255,255,255,0.02) 50%,
+    rgba(0,0,0,0.1) 70%,
+    rgba(255,255,255,0.06) 100%
+  );
+}
+
+[data-theme="dark"] .liquid-glass::after {
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), transparent);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
 }

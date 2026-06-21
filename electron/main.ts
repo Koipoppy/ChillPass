@@ -341,3 +341,35 @@ ipcMain.on('window:close', () => {
 ipcMain.handle('window:isMaximized', () => {
   return mainWindow?.isMaximized() ?? false
 })
+
+// ===== 专注模式 =====
+ipcMain.on('window:enterFocus', () => {
+  if (!mainWindow) return
+  mainWindow.setFullScreen(true)
+})
+
+ipcMain.on('window:exitFocus', () => {
+  if (!mainWindow) return
+  mainWindow.setFullScreen(false)
+})
+
+ipcMain.handle('window:isFullScreen', () => {
+  return mainWindow?.isFullScreen() ?? false
+})
+
+ipcMain.on('window:focusExitConfirm', async () => {
+  if (!mainWindow) return
+  const result = await dialog.showMessageBox(mainWindow, {
+    type: 'question',
+    title: '退出专注模式',
+    message: '退出专注模式？',
+    detail: '你正在专注模式中，确定要退出吗？',
+    buttons: ['取消', '退出专注'],
+    defaultId: 0,
+    cancelId: 0,
+  })
+  if (result.response === 1) {
+    mainWindow.setFullScreen(false)
+    mainWindow.webContents.send('focus:exited')
+  }
+})

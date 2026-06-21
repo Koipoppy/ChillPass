@@ -12,9 +12,14 @@ import {
   RefreshCw,
   Download,
   Sparkles,
+  Sun,
+  Moon,
+  Globe,
 } from 'lucide-react'
 import { useAuthStore } from '@stores/authStore'
 import { useCourseStore } from '@stores/courseStore'
+import { useThemeStore } from '@stores/themeStore'
+import { useLanguageStore, LANGUAGES } from '@stores/languageStore'
 import type { UpdateInfo, UpdateStatus } from '@types/index'
 import AccountLogin from '@components/AccountLogin'
 import styles from './SettingsPage.module.css'
@@ -24,6 +29,11 @@ export default function SettingsPage() {
   const account = useAuthStore(s => s.account)
   const logout = useAuthStore(s => s.logout)
   const courses = useCourseStore(s => s.courses)
+
+  const theme = useThemeStore(s => s.theme)
+  const setTheme = useThemeStore(s => s.setTheme)
+  const language = useLanguageStore(s => s.language)
+  const setLanguage = useLanguageStore(s => s.setLanguage)
 
   const [showLogin, setShowLogin] = useState(false)
   const [appVersion, setAppVersion] = useState('1.0.0')
@@ -219,7 +229,60 @@ export default function SettingsPage() {
         )}
       </section>
 
-      {/* 3. 导航卡片网格 */}
+      {/* 3. 外观与语言 */}
+      <section className={`liquid-glass ${styles.card}`}>
+        <div className={styles.cardHeader}>
+          <h2 className={styles.cardTitle}>外观与语言</h2>
+          <p className={styles.cardDesc}>切换浅色/深色主题，选择界面语言</p>
+        </div>
+
+        <div className={styles.appearanceRow}>
+          <span className={styles.appearanceLabel}>
+            <Sun size={16} strokeWidth={2} />
+            主题
+          </span>
+          <div className={styles.themeToggle}>
+            <button
+              type="button"
+              className={`${styles.themeOption} ${theme === 'light' ? styles.themeOptionActive : ''}`}
+              onClick={() => setTheme('light')}
+            >
+              <Sun size={14} strokeWidth={2} />
+              浅色
+            </button>
+            <button
+              type="button"
+              className={`${styles.themeOption} ${theme === 'dark' ? styles.themeOptionActive : ''}`}
+              onClick={() => setTheme('dark')}
+            >
+              <Moon size={14} strokeWidth={2} />
+              深色
+            </button>
+          </div>
+        </div>
+
+        <div className={styles.appearanceRow}>
+          <span className={styles.appearanceLabel}>
+            <Globe size={16} strokeWidth={2} />
+            语言
+          </span>
+          <div className={styles.langGrid}>
+            {LANGUAGES.map(lang => (
+              <button
+                key={lang.code}
+                type="button"
+                className={`${styles.langOption} ${language === lang.code ? styles.langOptionActive : ''}`}
+                onClick={() => setLanguage(lang.code)}
+              >
+                <span className={styles.langFlag}>{lang.flag}</span>
+                <span className={styles.langLabel}>{lang.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 4. 导航卡片网格 */}
       <section className={styles.navGrid}>
         {navCards.map(item => {
           const Icon = item.icon

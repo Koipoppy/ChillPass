@@ -9,8 +9,7 @@
 
 .main {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   padding: 24px 32px;
   position: relative;
 }
@@ -18,5 +17,8 @@
 /* 页面切换动画包装器 */
 .pageWrapper {
   min-height: 100%;
-  will-change: transform, opacity;
+  height: 100%;
+  will-change: transform;
+  overflow-y: auto;
+  overflow-x: hidden;
 }

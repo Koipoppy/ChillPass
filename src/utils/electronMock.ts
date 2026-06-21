@@ -55,6 +55,11 @@ export function setupElectronMock() {
     onWindowMaximizeChange: (_callback: (isMaximized: boolean) => void) => {
       return () => {}
     },
+    enterFocusMode: () => { console.log('[Mock] enterFocusMode') },
+    exitFocusMode: () => { console.log('[Mock] exitFocusMode') },
+    focusExitConfirm: () => { console.log('[Mock] focusExitConfirm') },
+    isFullScreen: async () => false,
+    onFocusExited: (_callback: () => void) => { return () => {} },
     platform: 'win32',
     // 应用版本
     getAppVersion: async () => '1.0.0',

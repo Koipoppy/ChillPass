@@ -19,28 +19,29 @@ import styles from './App.module.css'
 
 /**
  * 页面切换动画变体
- * 参考 Apple HIG 的灵动过渡：新页面从右侧丝滑滑入，旧页面向左淡出
- * 使用 spring 弹性曲线营造灵动感
+ * 纯挤入挤出效果：新页面从右侧推入，旧页面向左被挤出
+ * 不使用渐隐或突然消失，保持物理真实感
  */
 const pageVariants = {
   initial: {
-    opacity: 0,
     x: '100%',
   },
   enter: {
-    opacity: 1,
     x: 0,
     transition: {
-      opacity: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] },
-      x: { type: 'spring', stiffness: 380, damping: 38, mass: 0.8 },
+      type: 'spring',
+      stiffness: 320,
+      damping: 36,
+      mass: 0.9,
     },
   },
   exit: {
-    opacity: 0,
-    x: '-30%',
+    x: '-100%',
     transition: {
-      opacity: { duration: 0.2, ease: 'easeIn' },
-      x: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] },
+      type: 'spring',
+      stiffness: 320,
+      damping: 36,
+      mass: 0.9,
     },
   },
 }

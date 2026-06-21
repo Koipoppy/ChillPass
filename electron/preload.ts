@@ -27,6 +27,17 @@ const api = {
     return () => ipcRenderer.removeListener('window:maximizeChanged', handler)
   },
 
+  // 专注模式
+  enterFocusMode: () => ipcRenderer.send('window:enterFocus'),
+  exitFocusMode: () => ipcRenderer.send('window:exitFocus'),
+  focusExitConfirm: () => ipcRenderer.send('window:focusExitConfirm'),
+  isFullScreen: () => ipcRenderer.invoke('window:isFullScreen'),
+  onFocusExited: (callback: () => void) => {
+    const handler = () => callback()
+    ipcRenderer.on('focus:exited', handler)
+    return () => ipcRenderer.removeListener('focus:exited', handler)
+  },
+
   // 平台信息
   platform: process.platform,
 
