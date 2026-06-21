@@ -39,6 +39,8 @@ export interface ExamPoint {
   keyFormulas?: string[]
   examples?: string[]
   pageRefs?: string[]
+  /** 来源文件名 */
+  sourceFile?: string
 }
 
 /** 关卡（学习单元） */
@@ -53,6 +55,8 @@ export interface Lesson {
   xp: number
   content?: LessonContent
   completedAt?: number
+  /** 来源文件名 */
+  sourceFile?: string
 }
 
 /** 关卡内容 */

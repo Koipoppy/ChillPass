@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { CheckCircle, Lock, PlayCircle, Upload, Loader } from 'lucide-react'
+import { CheckCircle, Lock, PlayCircle, Upload, Loader, FileText } from 'lucide-react'
 import { useCurrentBundle } from '@stores/courseStore'
 import type { Lesson, Priority } from '@types/index'
 import styles from './LessonPathPage.module.css'
@@ -52,6 +52,16 @@ export default function LessonPathPage() {
     if (lesson.status === 'locked') return
     navigate(`/lessons/${lesson.id}`)
   }
+
+  // 按来源文件分组关卡
+  const groupedLessons = lessons.reduce((acc, lesson) => {
+    const key = lesson.sourceFile || '默认分组'
+    if (!acc[key]) acc[key] = []
+    acc[key].push(lesson)
+    return acc
+  }, {} as Record<string, Lesson[]>)
+
+  const groupKeys = Object.keys(groupedLessons)
 
   return (
     <div className={styles.page}>
@@ -128,70 +138,85 @@ export default function LessonPathPage() {
         </div>
       </header>
 
-      {/* 闯关路径 */}
-      <div className={`${styles.pathCard} liquid-glass`}>
-        <div className={styles.path}>
-          {lessons.map((lesson, index) => {
-            const prevCompleted =
-              index > 0 && lessons[index - 1].status === 'completed'
-            return (
-              <button
-                key={lesson.id}
-                type="button"
-                className={`${styles.lessonRow} ${
-                  lesson.status === 'locked' ? styles.row_locked : ''
-                }`}
-                onClick={() => handleLessonClick(lesson)}
-              >
-                <div className={styles.nodeColumn}>
-                  {index > 0 && (
-                    <div className={styles.connector}>
-                      <div
-                        className={`${styles.connectorLine} ${
-                          prevCompleted ? styles.connectorActive : ''
-                        }`}
-                      />
-                    </div>
-                  )}
-                  <div
-                    className={`${styles.nodeCircle} ${styles[`node_${lesson.status}`]}`}
-                  >
-                    {lesson.status === 'completed' ? (
-                      <CheckCircle size={28} strokeWidth={2.2} />
-                    ) : lesson.status === 'locked' ? (
-                      <Lock size={20} strokeWidth={2} />
-                    ) : (
-                      <span className={styles.nodeNumber}>{lesson.order}</span>
-                    )}
-                  </div>
-                </div>
-                <div
-                  className={`${styles.lessonInfo} ${
-                    lesson.status === 'locked' ? styles.lessonInfoLocked : ''
-                  }`}
-                >
-                  <div className={styles.lessonMeta}>
-                    <span
-                      className={`${styles.priorityTag} ${styles[`priority_${lesson.priority}`]}`}
+      {/* 按来源文件分组的闯关路径 */}
+      {groupKeys.map((groupKey, groupIndex) => {
+        const groupLessons = groupedLessons[groupKey]
+        return (
+          <div key={groupKey} style={{ marginBottom: '20px' }}>
+            {/* 分组标题 */}
+            <div className={styles.groupHeader}>
+              <FileText size={16} strokeWidth={2} />
+              <span className={styles.groupTitle}>{groupKey}</span>
+              <span className={styles.groupCount}>{groupLessons.length} 关</span>
+            </div>
+
+            {/* 该分组的关卡列表 */}
+            <div className={`${styles.pathCard} liquid-glass`}>
+              <div className={styles.path}>
+                {groupLessons.map((lesson, index) => {
+                  const prevCompleted =
+                    index > 0 && groupLessons[index - 1].status === 'completed'
+                  return (
+                    <button
+                      key={lesson.id}
+                      type="button"
+                      className={`${styles.lessonRow} ${
+                        lesson.status === 'locked' ? styles.row_locked : ''
+                      }`}
+                      onClick={() => handleLessonClick(lesson)}
                     >
-                      {priorityLabel[lesson.priority]}
-                    </span>
-                    <span className={styles.lessonXP}>{lesson.xp} XP</span>
-                  </div>
-                  <div className={styles.lessonTitle}>{lesson.title}</div>
-                  {lesson.status === 'completed' ? (
-                    <div className={styles.lessonStatusDone}>已完成</div>
-                  ) : lesson.status === 'locked' ? (
-                    <div className={styles.lessonStatusLocked}>未解锁</div>
-                  ) : (
-                    <div className={styles.lessonStatusActive}>点击开始</div>
-                  )}
-                </div>
-              </button>
-            )
-          })}
-        </div>
-      </div>
+                      <div className={styles.nodeColumn}>
+                        {index > 0 && (
+                          <div className={styles.connector}>
+                            <div
+                              className={`${styles.connectorLine} ${
+                                prevCompleted ? styles.connectorActive : ''
+                              }`}
+                            />
+                          </div>
+                        )}
+                        <div
+                          className={`${styles.nodeCircle} ${styles[`node_${lesson.status}`]}`}
+                        >
+                          {lesson.status === 'completed' ? (
+                            <CheckCircle size={28} strokeWidth={2.2} />
+                          ) : lesson.status === 'locked' ? (
+                            <Lock size={20} strokeWidth={2} />
+                          ) : (
+                            <span className={styles.nodeNumber}>{lesson.order}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div
+                        className={`${styles.lessonInfo} ${
+                          lesson.status === 'locked' ? styles.lessonInfoLocked : ''
+                        }`}
+                      >
+                        <div className={styles.lessonMeta}>
+                          <span
+                            className={`${styles.priorityTag} ${styles[`priority_${lesson.priority}`]}`}
+                          >
+                            {priorityLabel[lesson.priority]}
+                          </span>
+                          <span className={styles.lessonXP}>{lesson.xp} XP</span>
+                        </div>
+                        <div className={styles.lessonTitle}>{lesson.title}</div>
+                        {lesson.status === 'completed' ? (
+                          <div className={styles.lessonStatusDone}>已完成</div>
+                        ) : lesson.status === 'locked' ? (
+                          <div className={styles.lessonStatusLocked}>未解锁</div>
+                        ) : (
+                          <div className={styles.lessonStatusActive}>点击开始</div>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }

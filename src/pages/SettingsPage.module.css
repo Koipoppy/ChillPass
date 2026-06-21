@@ -540,6 +540,54 @@
   letter-spacing: -0.01em;
 }
 
+.langApplyRow {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.langApplyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--accent-text);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.langApplyBtn:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
+
+.langAppliedHint {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--success-text);
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* ===== 暗色模式 ===== */
 [data-theme="dark"] .themeToggle {
   background: rgba(255, 255, 255, 0.08);

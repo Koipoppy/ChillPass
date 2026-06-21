@@ -166,6 +166,7 @@ export const useCourseStore = create<CourseState>()(
           priority: point.priority,
           status: 'locked',
           xp: point.priority === 'must' ? 40 : point.priority === 'high' ? 35 : 30,
+          sourceFile: point.sourceFile,
         }))
 
         // 合并所有关卡并按优先级重新排序
@@ -222,6 +223,7 @@ export const useCourseStore = create<CourseState>()(
           priority: point.priority,
           status: index === 0 ? 'available' : 'locked',
           xp: point.priority === 'must' ? 40 : point.priority === 'high' ? 35 : 30,
+          sourceFile: point.sourceFile,
         }))
 
         set(s => updateCurrentBundle(s, b => ({

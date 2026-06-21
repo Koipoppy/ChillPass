@@ -15,11 +15,13 @@ import {
   Sun,
   Moon,
   Globe,
+  Check,
 } from 'lucide-react'
 import { useAuthStore } from '@stores/authStore'
 import { useCourseStore } from '@stores/courseStore'
 import { useThemeStore } from '@stores/themeStore'
 import { useLanguageStore, LANGUAGES } from '@stores/languageStore'
+import type { Language } from '@stores/languageStore'
 import type { UpdateInfo, UpdateStatus } from '@types/index'
 import AccountLogin from '@components/AccountLogin'
 import styles from './SettingsPage.module.css'
@@ -37,6 +39,8 @@ export default function SettingsPage() {
 
   const [showLogin, setShowLogin] = useState(false)
   const [appVersion, setAppVersion] = useState('1.0.0')
+  const [pendingLang, setPendingLang] = useState<Language>(language)
+  const [langApplied, setLangApplied] = useState(false)
 
   // 更新检查状态
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('idle')
@@ -71,6 +75,12 @@ export default function SettingsPage() {
     if (window.confirm('确定要退出登录吗？')) {
       logout()
     }
+  }
+
+  const handleApplyLanguage = () => {
+    setLanguage(pendingLang)
+    setLangApplied(true)
+    window.setTimeout(() => setLangApplied(false), 2000)
   }
 
   // 统计数据
@@ -271,8 +281,8 @@ export default function SettingsPage() {
               <button
                 key={lang.code}
                 type="button"
-                className={`${styles.langOption} ${language === lang.code ? styles.langOptionActive : ''}`}
-                onClick={() => setLanguage(lang.code)}
+                className={`${styles.langOption} ${pendingLang === lang.code ? styles.langOptionActive : ''}`}
+                onClick={() => setPendingLang(lang.code)}
               >
                 <span className={styles.langFlag}>{lang.flag}</span>
                 <span className={styles.langLabel}>{lang.label}</span>
@@ -280,6 +290,22 @@ export default function SettingsPage() {
             ))}
           </div>
         </div>
+
+        {pendingLang !== language && (
+          <div className={styles.langApplyRow}>
+            {langApplied && (
+              <span className={styles.langAppliedHint}>已应用</span>
+            )}
+            <button
+              type="button"
+              className={styles.langApplyBtn}
+              onClick={handleApplyLanguage}
+            >
+              <Check size={15} strokeWidth={2.4} />
+              应用语言
+            </button>
+          </div>
+        )}
       </section>
 
       {/* 4. 导航卡片网格 */}

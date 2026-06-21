@@ -47,8 +47,10 @@ export default function UploadPage() {
   const mergeExamPoints = useCourseStore(s => s.mergeExamPoints)
   const switchCourse = useCourseStore(s => s.switchCourse)
 
-  const [mode, setMode] = useState<ImportMode>('create')
-  const [selectedCourseId, setSelectedCourseId] = useState<string>('')
+  const [mode, setMode] = useState<ImportMode>(hasExistingCourses ? 'append' : 'create')
+  const [selectedCourseId, setSelectedCourseId] = useState<string>(
+    hasExistingCourses ? courses[0].course.id : ''
+  )
   const [courseName, setCourseName] = useState(currentCourse?.name ?? '')
   const [files, setFiles] = useState<CourseFile[]>(currentCourse?.files ?? [])
   const [phase, setPhase] = useState<Phase>('idle')
@@ -265,25 +267,20 @@ export default function UploadPage() {
       const cleaned = cleanText(merged)
       appendRawText(cleaned)
 
-      // 3. 获取更新后的完整 rawText
-      const updatedBundle = useCourseStore
-        .getState()
-        .courses.find(b => b.course.id === selectedCourseId)
-      const completeRawText = updatedBundle?.rawText ?? ''
-
-      // 4. 重新提炼全部考点
+      // 3. 只从新增课件文本中提炼考点（不重新提炼全部，避免已有关卡被重置）
       setPhase('extracting')
-      setProgressText('正在重新提炼全部考点...')
-      const allPoints = await extractExamPoints(completeRawText, courseNameForExtract)
+      setProgressText('正在从新增课件中提炼考点...')
+      const sourceFileName = files.length === 1 ? files[0].name : `${files.length} 个新文件`
+      const newPoints = await extractExamPoints(cleaned, courseNameForExtract, sourceFileName)
 
-      // 5. 增量合并（只为新考点创建关卡，已有内容的关卡保留）
+      // 4. 增量合并（只为新考点创建关卡，已有内容的关卡完整保留）
       setProgressText('正在合并考点，生成新关卡...')
-      mergeExamPoints(allPoints)
+      mergeExamPoints(newPoints)
 
-      // 6. 后台生成关卡内容（已有内容的关卡会自动跳过）
+      // 5. 后台生成关卡内容（已有内容的关卡会自动跳过）
       generateAllLessonsInBackground(selectedCourseId)
 
-      // 7. 跳转到闯关路径
+      // 6. 跳转到闯关路径
       navigate('/lessons')
     } catch (err) {
       setError(err instanceof Error ? err.message : '解析失败，请重试')

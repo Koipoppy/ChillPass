@@ -100,8 +100,26 @@ export async function* callDeepSeekStream(
 
 /**
  * 从课件文本中提炼考点
+ * @param sourceFile 来源文件名，用于标注考点来源
  */
-export async function extractExamPoints(courseText: string, courseName: string): Promise<ExamPoint[]> {
+export async function extractExamPoints(
+  courseText: string,
+  courseName: string,
+  sourceFile?: string
+): Promise<ExamPoint[]> {
+  // 根据文本长度动态调整考点数量
+  const textLength = courseText.length
+  let pointRange: string
+  if (textLength < 3000) {
+    pointRange = '3-6 个'
+  } else if (textLength < 8000) {
+    pointRange = '5-10 个'
+  } else if (textLength < 20000) {
+    pointRange = '8-15 个'
+  } else {
+    pointRange = '10-20 个'
+  }
+
   const systemPrompt = `你是一位经验丰富的大学考试辅导专家。你的任务是分析课件内容，提炼出考试考点。
 
 请按以下 JSON 格式返回考点列表，不要包含任何其他文字：
@@ -120,9 +138,9 @@ export async function extractExamPoints(courseText: string, courseName: string):
 - high: 高频，经常出现，需要掌握
 - know: 了解，可能考但不是重点
 
-考点数量控制在 8-15 个之间。按重要性排序。`
+考点数量控制在 ${pointRange} 之间，根据课件实际内容容量决定。按重要性排序。`
 
-  const userPrompt = `课程名称：${courseName}\n\n课件内容：\n${courseText.slice(0, 12000)}`
+  const userPrompt = `课程名称：${courseName}\n${sourceFile ? `来源文件：${sourceFile}\n` : ''}\n课件内容：\n${courseText.slice(0, 12000)}`
 
   const result = await callDeepSeek(
     [
@@ -139,12 +157,13 @@ export async function extractExamPoints(courseText: string, courseName: string):
     const points = JSON.parse(json)
 
     return points.map((p: any, index: number) => ({
-      id: `point-${Date.now()}-${index}`,
+      id: `point-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 6)}`,
       title: p.title,
       priority: p.priority,
       description: p.description,
       keyFormulas: p.keyFormulas || [],
       pageRefs: p.pageRefs || [],
+      sourceFile: sourceFile,
     }))
   } catch {
     throw new Error('AI 返回格式解析失败，请重试')
@@ -232,7 +251,15 @@ ${courseText.slice(0, 6000)}`
   try {
     const jsonMatch = result.match(/\{[\s\S]*\}/)
     const json = jsonMatch ? jsonMatch[0] : result
-    return JSON.parse(json)
+    const parsed = JSON.parse(json)
+    // 为每道小测题生成唯一 ID，确保答题状态独立
+    if (parsed.quiz && Array.isArray(parsed.quiz)) {
+      parsed.quiz = parsed.quiz.map((q: any, i: number) => ({
+        ...q,
+        id: `quiz-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 8)}`,
+      }))
+    }
+    return parsed
   } catch {
     throw new Error('关卡内容生成失败，请重试')
   }

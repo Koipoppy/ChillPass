@@ -5,6 +5,38 @@
   animation: fadeIn 0.4s ease-out;
 }
 
+/* ===== 分组标题 ===== */
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px 10px;
+  color: var(--text-secondary);
+}
+
+.groupHeader svg {
+  color: var(--text-tertiary);
+}
+
+.groupTitle {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.groupCount {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .groupCount {
+  background: rgba(255, 255, 255, 0.08);
+}
+
 /* ===== 头部 ===== */
 .header {
   margin-bottom: 24px;

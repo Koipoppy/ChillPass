@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import type { KeyboardEvent as ReactKeyboardEvent, ChangeEvent as ReactChangeEvent } from 'react'
+import type { KeyboardEvent as ReactKeyboardEvent, ChangeEvent as ReactChangeEvent, PointerEvent as ReactPointerEvent } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Send, MessageCircle, Trash2, Sparkles, ImageIcon, Loader, X } from 'lucide-react'
 import { marked } from 'marked'
@@ -92,6 +92,13 @@ export default function AIChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const prevLengthRef = useRef(0)
 
+  // 自定义滚动手柄相关状态
+  const [showScrollHandle, setShowScrollHandle] = useState(false)
+  const [handleOffset, setHandleOffset] = useState(0)
+  const isDragging = useRef(false)
+  const dragStartY = useRef(0)
+  const scrollStart = useRef(0)
+
   const location = useLocation()
 
   // 从错题本跳转过来时，预填内容并自动聚焦
@@ -117,12 +124,14 @@ export default function AIChatPage() {
     })
   }, [messages])
 
-  // 输入框自适应高度
+  // 输入框自适应高度 + 检测是否溢出
   useEffect(() => {
     const textarea = textareaRef.current
     if (!textarea) return
     textarea.style.height = 'auto'
     textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`
+    // 内容超出可视区域时显示自定义滚动手柄
+    setShowScrollHandle(textarea.scrollHeight > textarea.clientHeight)
   }, [input])
 
   // 选择图片：转 data URL 预览 + 本地 OCR 识别文字
@@ -222,6 +231,32 @@ export default function AIChatPage() {
   const handleClear = () => {
     if (isStreaming || messages.length === 0) return
     clearMessages()
+  }
+
+  // 自定义滚动手柄：拖拽控制 textarea 滚动
+  const handleScrollStart = (e: ReactPointerEvent) => {
+    isDragging.current = true
+    dragStartY.current = e.clientY
+    scrollStart.current = textareaRef.current?.scrollTop ?? 0
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  const handleScrollMove = (e: ReactPointerEvent) => {
+    if (!isDragging.current || !textareaRef.current) return
+    const deltaY = e.clientY - dragStartY.current
+    const maxScroll = textareaRef.current.scrollHeight - textareaRef.current.clientHeight
+    // 向上拖（deltaY 为负）= 向上滚动（scrollTop 减小）
+    const scrollRatio = maxScroll > 0 ? 1 : 0
+    textareaRef.current.scrollTop = scrollStart.current - deltaY * scrollRatio
+    // 手柄视觉偏移（限制范围）
+    const maxOffset = 30
+    setHandleOffset(Math.max(-maxOffset, Math.min(maxOffset, -deltaY * 0.5)))
+  }
+
+  const handleScrollEnd = () => {
+    isDragging.current = false
+    // 弹回中心
+    setHandleOffset(0)
   }
 
   const canSend = input.trim().length > 0 && !isStreaming
@@ -373,6 +408,19 @@ export default function AIChatPage() {
             disabled={isStreaming}
             rows={1}
           />
+          {/* 自定义滚动条手柄：仅当内容溢出时显示 */}
+          {showScrollHandle && (
+            <div
+              className={styles.scrollHandle}
+              onPointerDown={handleScrollStart}
+              onPointerMove={handleScrollMove}
+              onPointerUp={handleScrollEnd}
+              onPointerLeave={handleScrollEnd}
+              style={{ transform: `translateY(calc(-50% + ${handleOffset}px))` }}
+            >
+              <div className={styles.scrollHandleThumb} />
+            </div>
+          )}
           <button
             className={`${styles.sendBtn} ${!canSend ? styles.sendBtnDisabled : ''}`}
             onClick={() => handleSend()}
