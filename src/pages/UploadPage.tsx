@@ -47,17 +47,19 @@ export default function UploadPage() {
   const mergeExamPoints = useCourseStore(s => s.mergeExamPoints)
   const switchCourse = useCourseStore(s => s.switchCourse)
 
-  const [mode, setMode] = useState<ImportMode>(hasExistingCourses ? 'append' : 'create')
+  const [mode, setMode] = useState<ImportMode>(courses.length > 0 ? 'append' : 'create')
   const [selectedCourseId, setSelectedCourseId] = useState<string>(
-    hasExistingCourses ? courses[0].course.id : ''
+    courses.length > 0 ? courses[0].course.id : ''
   )
   const [courseName, setCourseName] = useState(currentCourse?.name ?? '')
-  const [files, setFiles] = useState<CourseFile[]>(currentCourse?.files ?? [])
+  // 增量模式下只显示新选择的文件，不显示已有文件
+  const [files, setFiles] = useState<CourseFile[]>([])
   const [phase, setPhase] = useState<Phase>('idle')
   const [progress, setProgress] = useState(0)
   const [progressText, setProgressText] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
+  const [skippedFiles, setSkippedFiles] = useState<string[]>([])
 
   const isBusy = phase !== 'idle'
   const hasExistingCourses = courses.length > 0
@@ -89,8 +91,9 @@ export default function UploadPage() {
     if (newMode === 'append' && !hasExistingCourses) return
     setMode(newMode)
     setError(null)
-    // 切换模式时清空已选文件，避免不同模式间文件混淆
+    // 切换模式时清空已选文件
     setFiles([])
+    setSkippedFiles([])
     if (newMode === 'append') {
       // 默认选中第一个课程（若尚未选择）
       if (!selectedCourseId && hasExistingCourses) {
@@ -250,17 +253,51 @@ export default function UploadPage() {
     try {
       // 确保切换到目标课程
       switchCourse(selectedCourseId)
-      // 记录新增文件到课程
-      addFiles(files)
 
-      // 1. 逐个解析新文件
+      // 1. 逐个解析新文件，检测重复内容
       const texts: string[] = []
+      const skipped: string[] = []
+      const existingRawText = targetBundle.rawText || ''
+      // 提取已有文本的特征句子（用于重复检测）
+      const existingSentences = new Set(
+        existingRawText.split(/[。\n！？!?]/).map(s => s.trim()).filter(s => s.length > 15)
+      )
+
       for (let i = 0; i < files.length; i++) {
         setProgressText(`正在解析 ${files[i].name}（${i + 1}/${files.length}）`)
         const text = await parseFile(files[i].path, files[i].ext)
+
+        // 重复内容检测：计算与已有内容的句子重叠率
+        if (existingSentences.size > 0) {
+          const newSentences = text.split(/[。\n！？!?]/).map(s => s.trim()).filter(s => s.length > 15)
+          if (newSentences.length > 0) {
+            const overlapCount = newSentences.filter(s => existingSentences.has(s)).length
+            const overlapRate = overlapCount / newSentences.length
+            if (overlapRate > 0.7) {
+              skipped.push(files[i].name)
+              setProgress(Math.round(((i + 1) / files.length) * 100))
+              continue // 跳过此文件
+            }
+          }
+        }
+
         texts.push(text)
         setProgress(Math.round(((i + 1) / files.length) * 100))
       }
+
+      setSkippedFiles(skipped)
+
+      // 如果所有文件都被跳过
+      if (texts.length === 0) {
+        setError('所有文件与已有内容重复率过高，已全部跳过')
+        setPhase('idle')
+        setProgress(0)
+        return
+      }
+
+      // 记录新增文件到课程（只记录未跳过的）
+      const validFiles = files.filter(f => !skipped.includes(f.name))
+      addFiles(validFiles)
 
       // 2. 清洗并追加到已有文本
       const merged = texts.join('\n\n')
@@ -270,7 +307,7 @@ export default function UploadPage() {
       // 3. 只从新增课件文本中提炼考点（不重新提炼全部，避免已有关卡被重置）
       setPhase('extracting')
       setProgressText('正在从新增课件中提炼考点...')
-      const sourceFileName = files.length === 1 ? files[0].name : `${files.length} 个新文件`
+      const sourceFileName = validFiles.length === 1 ? validFiles[0].name : `${validFiles.length} 个新文件`
       const newPoints = await extractExamPoints(cleaned, courseNameForExtract, sourceFileName)
 
       // 4. 增量合并（只为新考点创建关卡，已有内容的关卡完整保留）
@@ -445,6 +482,15 @@ export default function UploadPage() {
           <div className={styles.error}>
             <X size={16} strokeWidth={2} />
             <span>{error}</span>
+          </div>
+        )}
+
+        {/* 跳过文件提示 */}
+        {skippedFiles.length > 0 && !isBusy && (
+          <div className={styles.progress}>
+            <div className={styles.progressHeader} style={{ color: 'var(--warning-text)' }}>
+              <span>已跳过 {skippedFiles.length} 个重复文件：{skippedFiles.join('、')}</span>
+            </div>
           </div>
         )}
 

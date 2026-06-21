@@ -22,6 +22,8 @@ import { useCourseStore } from '@stores/courseStore'
 import { useThemeStore } from '@stores/themeStore'
 import { useLanguageStore, LANGUAGES } from '@stores/languageStore'
 import type { Language } from '@stores/languageStore'
+import { useT } from '../i18n'
+import type { TranslationKey } from '../i18n'
 import type { UpdateInfo, UpdateStatus } from '@types/index'
 import AccountLogin from '@components/AccountLogin'
 import styles from './SettingsPage.module.css'
@@ -36,6 +38,7 @@ export default function SettingsPage() {
   const setTheme = useThemeStore(s => s.setTheme)
   const language = useLanguageStore(s => s.language)
   const setLanguage = useLanguageStore(s => s.setLanguage)
+  const t = useT()
 
   const [showLogin, setShowLogin] = useState(false)
   const [appVersion, setAppVersion] = useState('1.0.0')
@@ -66,13 +69,13 @@ export default function SettingsPage() {
         setUpdateStatus('not-available')
       }
     } catch (err) {
-      setUpdateError(err instanceof Error ? err.message : '检查失败')
+      setUpdateError(err instanceof Error ? err.message : t('about.checkFailed'))
       setUpdateStatus('error')
     }
   }
 
   const handleLogout = () => {
-    if (window.confirm('确定要退出登录吗？')) {
+    if (window.confirm(t('settings.logoutConfirm'))) {
       logout()
     }
   }
@@ -90,38 +93,38 @@ export default function SettingsPage() {
   // 账号头像首字
   const avatarChar = account?.name?.charAt(0)?.toUpperCase() || '?'
 
-  const navCards = [
+  const navCards: { path: string; icon: typeof Key; titleKey: TranslationKey; descKey: TranslationKey }[] = [
     {
       path: '/settings/api',
       icon: Key,
-      title: 'API 配置',
-      desc: 'DeepSeek 模型密钥与参数',
+      titleKey: 'settings.api',
+      descKey: 'settings.apiDesc',
     },
     {
       path: '/settings/storage',
       icon: HardDrive,
-      title: '存储与迁移',
-      desc: '资源路径配置与文件迁移',
+      titleKey: 'settings.storage',
+      descKey: 'settings.storageDesc',
     },
     {
       path: '/settings/data',
       icon: Database,
-      title: '数据管理',
-      desc: '课程数据统计与清除',
+      titleKey: 'settings.data',
+      descKey: 'settings.dataDesc',
     },
     {
       path: '/settings/about',
       icon: Info,
-      title: '关于',
-      desc: '应用信息与检查更新',
+      titleKey: 'settings.about',
+      descKey: 'settings.aboutDesc',
     },
   ]
 
   return (
     <div className={`${styles.container} fade-in`}>
       <header className={styles.header}>
-        <h1 className={styles.title}>设置</h1>
-        <p className={styles.subtitle}>应用信息、账户与偏好设置</p>
+        <h1 className={styles.title}>{t('settings.title')}</h1>
+        <p className={styles.subtitle}>{t('settings.subtitle')}</p>
       </header>
 
       {/* 1. 应用信息卡片 */}
@@ -132,7 +135,7 @@ export default function SettingsPage() {
           </div>
           <div className={styles.appInfoText}>
             <h2 className={styles.appName}>ChillPass</h2>
-            <p className={styles.appDesc}>AI 驱动的闯关式期末冲刺助手</p>
+            <p className={styles.appDesc}>{t('settings.appDesc')}</p>
           </div>
           <div className={styles.versionBadge}>v{appVersion}</div>
         </div>
@@ -140,11 +143,11 @@ export default function SettingsPage() {
         <div className={styles.statRow}>
           <div className={styles.statItem}>
             <span className={styles.statNum}>{totalCourses}</span>
-            <span className={styles.statLabel}>课程</span>
+            <span className={styles.statLabel}>{t('settings.statsCourses')}</span>
           </div>
           <div className={styles.statItem}>
             <span className={styles.statNum}>{totalFiles}</span>
-            <span className={styles.statLabel}>课件文件</span>
+            <span className={styles.statLabel}>{t('settings.statsFiles')}</span>
           </div>
         </div>
 
@@ -153,35 +156,37 @@ export default function SettingsPage() {
           {updateStatus === 'idle' && (
             <button className={styles.updateBtn} onClick={handleCheckUpdate}>
               <RefreshCw size={15} strokeWidth={2} />
-              检查更新
+              {t('settings.checkUpdate')}
             </button>
           )}
           {updateStatus === 'checking' && (
             <div className={styles.updateChecking}>
               <RefreshCw size={15} strokeWidth={2} className={styles.spinIcon} />
-              <span>正在检查更新...</span>
+              <span>{t('settings.checkingUpdate')}</span>
             </div>
           )}
           {updateStatus === 'not-available' && (
             <div className={styles.updateToDate}>
-              <span>已是最新版本 v{appVersion}</span>
+              <span>{t('settings.upToDate').replace('{version}', appVersion)}</span>
               <button className={styles.recheckBtn} onClick={handleCheckUpdate}>
-                重新检查
+                {t('settings.recheck')}
               </button>
             </div>
           )}
           {updateStatus === 'available' && updateInfo && (
             <div className={styles.updateAvailable}>
               <div className={styles.updateAvailableText}>
-                发现新版本 v{updateInfo.version}
-                <span className={styles.updateCurrentVer}>（当前 v{updateInfo.currentVersion}）</span>
+                {t('settings.newVersionFound').replace('{version}', updateInfo.version)}
+                <span className={styles.updateCurrentVer}>
+                  {t('settings.currentVersion').replace('{version}', updateInfo.currentVersion)}
+                </span>
               </div>
               <button
                 className={styles.downloadBtn}
                 onClick={() => window.electronAPI.openExternalUrl(updateInfo.downloadUrl)}
               >
                 <Download size={15} strokeWidth={2} />
-                下载更新
+                {t('settings.downloadUpdate')}
               </button>
             </div>
           )}
@@ -189,7 +194,7 @@ export default function SettingsPage() {
             <div className={styles.updateError}>
               <span>{updateError}</span>
               <button className={styles.recheckBtn} onClick={handleCheckUpdate}>
-                重试
+                {t('settings.retry')}
               </button>
             </div>
           )}
@@ -199,8 +204,8 @@ export default function SettingsPage() {
       {/* 2. 账户信息卡片 */}
       <section className={`liquid-glass ${styles.card}`}>
         <div className={styles.cardHeader}>
-          <h2 className={styles.cardTitle}>账户信息</h2>
-          <p className={styles.cardDesc}>校园账号登录，为未来教务系统对接做准备</p>
+          <h2 className={styles.cardTitle}>{t('settings.account')}</h2>
+          <p className={styles.cardDesc}>{t('settings.accountDesc')}</p>
         </div>
 
         {account ? (
@@ -217,7 +222,7 @@ export default function SettingsPage() {
             </div>
             <button className={styles.logoutBtn} onClick={handleLogout}>
               <LogOut size={16} strokeWidth={2} />
-              退出登录
+              {t('settings.logout')}
             </button>
           </div>
         ) : (
@@ -226,14 +231,14 @@ export default function SettingsPage() {
               <GraduationCap size={28} strokeWidth={1.6} />
             </div>
             <div className={styles.loginPromptText}>
-              <span className={styles.loginPromptTitle}>尚未登录校园账号</span>
+              <span className={styles.loginPromptTitle}>{t('settings.notLoggedIn')}</span>
               <span className={styles.loginPromptDesc}>
-                登录后可同步课程信息，未来支持教务系统自动导入
+                {t('settings.notLoggedInDesc')}
               </span>
             </div>
             <button className={styles.loginBtn} onClick={() => setShowLogin(true)}>
               <LogIn size={16} strokeWidth={2} />
-              登录
+              {t('settings.login')}
             </button>
           </div>
         )}
@@ -242,14 +247,14 @@ export default function SettingsPage() {
       {/* 3. 外观与语言 */}
       <section className={`liquid-glass ${styles.card}`}>
         <div className={styles.cardHeader}>
-          <h2 className={styles.cardTitle}>外观与语言</h2>
-          <p className={styles.cardDesc}>切换浅色/深色主题，选择界面语言</p>
+          <h2 className={styles.cardTitle}>{t('settings.appearance')}</h2>
+          <p className={styles.cardDesc}>{t('settings.appearanceDesc')}</p>
         </div>
 
         <div className={styles.appearanceRow}>
           <span className={styles.appearanceLabel}>
             <Sun size={16} strokeWidth={2} />
-            主题
+            {t('settings.theme')}
           </span>
           <div className={styles.themeToggle}>
             <button
@@ -258,7 +263,7 @@ export default function SettingsPage() {
               onClick={() => setTheme('light')}
             >
               <Sun size={14} strokeWidth={2} />
-              浅色
+              {t('settings.themeLight')}
             </button>
             <button
               type="button"
@@ -266,7 +271,7 @@ export default function SettingsPage() {
               onClick={() => setTheme('dark')}
             >
               <Moon size={14} strokeWidth={2} />
-              深色
+              {t('settings.themeDark')}
             </button>
           </div>
         </div>
@@ -274,7 +279,7 @@ export default function SettingsPage() {
         <div className={styles.appearanceRow}>
           <span className={styles.appearanceLabel}>
             <Globe size={16} strokeWidth={2} />
-            语言
+            {t('settings.language')}
           </span>
           <div className={styles.langGrid}>
             {LANGUAGES.map(lang => (
@@ -294,7 +299,7 @@ export default function SettingsPage() {
         {pendingLang !== language && (
           <div className={styles.langApplyRow}>
             {langApplied && (
-              <span className={styles.langAppliedHint}>已应用</span>
+              <span className={styles.langAppliedHint}>{t('settings.applied')}</span>
             )}
             <button
               type="button"
@@ -302,7 +307,7 @@ export default function SettingsPage() {
               onClick={handleApplyLanguage}
             >
               <Check size={15} strokeWidth={2.4} />
-              应用语言
+              {t('settings.applyLanguage')}
             </button>
           </div>
         )}
@@ -322,8 +327,8 @@ export default function SettingsPage() {
                 <Icon size={20} strokeWidth={1.8} />
               </div>
               <div className={styles.navCardText}>
-                <span className={styles.navCardTitle}>{item.title}</span>
-                <span className={styles.navCardDesc}>{item.desc}</span>
+                <span className={styles.navCardTitle}>{t(item.titleKey)}</span>
+                <span className={styles.navCardDesc}>{t(item.descKey)}</span>
               </div>
               <ChevronRight size={18} strokeWidth={2} className={styles.navCardArrow} />
             </button>

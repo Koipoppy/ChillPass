@@ -234,6 +234,7 @@ export default function AIChatPage() {
   }
 
   // 自定义滚动手柄：拖拽控制 textarea 滚动
+  // 逻辑：手柄跟随光标移动，光标往下 → 手柄往下 → 内容往下滚（显示下侧内容）
   const handleScrollStart = (e: ReactPointerEvent) => {
     isDragging.current = true
     dragStartY.current = e.clientY
@@ -245,12 +246,13 @@ export default function AIChatPage() {
     if (!isDragging.current || !textareaRef.current) return
     const deltaY = e.clientY - dragStartY.current
     const maxScroll = textareaRef.current.scrollHeight - textareaRef.current.clientHeight
-    // 向上拖（deltaY 为负）= 向上滚动（scrollTop 减小）
-    const scrollRatio = maxScroll > 0 ? 1 : 0
-    textareaRef.current.scrollTop = scrollStart.current - deltaY * scrollRatio
-    // 手柄视觉偏移（限制范围）
+    // 光标往下（deltaY 正）→ 往下滚动（scrollTop 增大）→ 显示下侧内容
+    if (maxScroll > 0) {
+      textareaRef.current.scrollTop = Math.max(0, Math.min(maxScroll, scrollStart.current + deltaY))
+    }
+    // 手柄跟随光标移动（限制范围）
     const maxOffset = 30
-    setHandleOffset(Math.max(-maxOffset, Math.min(maxOffset, -deltaY * 0.5)))
+    setHandleOffset(Math.max(-maxOffset, Math.min(maxOffset, deltaY)))
   }
 
   const handleScrollEnd = () => {
@@ -416,7 +418,7 @@ export default function AIChatPage() {
               onPointerMove={handleScrollMove}
               onPointerUp={handleScrollEnd}
               onPointerLeave={handleScrollEnd}
-              style={{ transform: `translateY(calc(-50% + ${handleOffset}px))` }}
+              style={{ '--handle-offset': `${handleOffset}px` } as React.CSSProperties}
             >
               <div className={styles.scrollHandleThumb} />
             </div>

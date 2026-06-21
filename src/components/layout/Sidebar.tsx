@@ -1,20 +1,24 @@
 import { NavLink } from 'react-router-dom'
-import { Home, Upload, BookOpen, MessageCircle, Settings } from 'lucide-react'
+import { Home, Upload, BookOpen, BookX, MessageCircle, Settings } from 'lucide-react'
 import styles from './Sidebar.module.css'
 import { useCourseStore, useCurrentBundle } from '@stores/courseStore'
+import { useT } from '../../i18n'
+import type { TranslationKey } from '../../i18n'
 
 const navItems = [
-  { path: '/', label: '首页', icon: Home },
-  { path: '/upload', label: '导入课件', icon: Upload },
-  { path: '/lessons', label: '闯关冲刺', icon: BookOpen },
-  { path: '/chat', label: 'AI 助教', icon: MessageCircle },
-  { path: '/settings', label: '设置', icon: Settings },
+  { path: '/', labelKey: 'nav.dashboard' as TranslationKey, icon: Home },
+  { path: '/upload', labelKey: 'nav.upload' as TranslationKey, icon: Upload },
+  { path: '/lessons', labelKey: 'nav.lessons' as TranslationKey, icon: BookOpen },
+  { path: '/wrongbook', labelKey: 'nav.wrongbook' as TranslationKey, icon: BookX },
+  { path: '/chat', labelKey: 'nav.chat' as TranslationKey, icon: MessageCircle },
+  { path: '/settings', labelKey: 'nav.settings' as TranslationKey, icon: Settings },
 ]
 
 export default function Sidebar() {
   const bundle = useCurrentBundle()
   const course = bundle?.course
   const progress = bundle?.progress
+  const t = useT()
 
   return (
     <aside className={styles.sidebar}>
@@ -38,7 +42,7 @@ export default function Sidebar() {
                 }
               >
                 <Icon size={20} strokeWidth={1.8} />
-                <span>{item.label}</span>
+                <span>{t(item.labelKey)}</span>
               </NavLink>
             )
           })}
@@ -52,7 +56,7 @@ export default function Sidebar() {
               <span className={styles.progressNumber}>
                 {progress!.completedLessons}/{progress!.totalLessons}
               </span>
-              <span className={styles.progressLabel}>关卡</span>
+              <span className={styles.progressLabel}>{t('nav.levelUnit')}</span>
             </div>
             <div className={styles.progressBar}>
               <div
@@ -67,7 +71,7 @@ export default function Sidebar() {
             <div className={styles.progressXP}>
               <span style={{ color: 'var(--success-text)' }}>{progress!.totalXP} XP</span>
               {bundle!.generatingLessons && (
-                <span className={styles.generatingBadge}>生成中...</span>
+                <span className={styles.generatingBadge}>{t('nav.generating')}</span>
               )}
             </div>
           </div>

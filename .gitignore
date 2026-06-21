@@ -31,3 +31,6 @@ npm-debug.log*
 *.swo
 
 # Windows 拼写检查缓存（乱码目录）
+NUL.css
+vite.config.d.ts
+vite.config.js

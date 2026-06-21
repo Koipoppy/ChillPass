@@ -13,10 +13,12 @@ import {
   Check,
 } from 'lucide-react'
 import type { UpdateInfo, UpdateStatus } from '@types/index'
+import { useT } from '../../i18n'
 import styles from './SettingsSub.module.css'
 
 export default function AboutSettings() {
   const navigate = useNavigate()
+  const t = useT()
 
   const [version, setVersion] = useState('')
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('idle')
@@ -36,8 +38,8 @@ export default function AboutSettings() {
     window.electronAPI
       .getAppVersion()
       .then(v => setVersion(v))
-      .catch(() => setVersion('未知'))
-  }, [])
+      .catch(() => setVersion(t('about.unknown')))
+  }, [t])
 
   const handleCheckUpdate = async () => {
     setUpdateStatus('checking')
@@ -52,7 +54,7 @@ export default function AboutSettings() {
         setUpdateStatus('not-available')
       }
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : '检查更新时发生未知错误')
+      setErrorMsg(err instanceof Error ? err.message : t('about.unknownError'))
       setUpdateStatus('error')
     }
   }
@@ -70,30 +72,30 @@ export default function AboutSettings() {
           type="button"
           className={styles.backBtn}
           onClick={() => navigate('/settings')}
-          aria-label="返回设置"
+          aria-label={t('about.backToSettings')}
         >
           <ArrowLeft size={18} strokeWidth={2} />
         </button>
         <div className={styles.headerText}>
-          <h1 className={styles.title}>关于</h1>
-          <p className={styles.subtitle}>了解 ChillPass 并检查应用更新</p>
+          <h1 className={styles.title}>{t('settings.about')}</h1>
+          <p className={styles.subtitle}>{t('about.subtitle')}</p>
         </div>
       </header>
 
       {/* 应用信息 */}
       <section className={`liquid-glass ${styles.card}`}>
         <div className={styles.cardHeader}>
-          <h2 className={styles.cardTitle}>应用信息</h2>
+          <h2 className={styles.cardTitle}>{t('about.appInfo')}</h2>
         </div>
 
         <div>
           <div className={styles.infoRow}>
-            <span className={styles.infoLabel}>应用名称</span>
+            <span className={styles.infoLabel}>{t('about.appName')}</span>
             <span className={styles.infoValue}>ChillPass</span>
           </div>
           <div className={styles.infoRow}>
-            <span className={styles.infoLabel}>版本</span>
-            <span className={styles.infoValue}>{version || '加载中...'}</span>
+            <span className={styles.infoLabel}>{t('about.version')}</span>
+            <span className={styles.infoValue}>{version || t('about.loading')}</span>
           </div>
         </div>
       </section>
@@ -101,8 +103,8 @@ export default function AboutSettings() {
       {/* 更新检查 */}
       <section className={`liquid-glass ${styles.card}`}>
         <div className={styles.cardHeader}>
-          <h2 className={styles.cardTitle}>更新检查</h2>
-          <p className={styles.cardDesc}>检查是否有新版本可用，保持应用为最新</p>
+          <h2 className={styles.cardTitle}>{t('about.updateCheck')}</h2>
+          <p className={styles.cardDesc}>{t('about.updateCheckDesc')}</p>
         </div>
 
         <div className={styles.actions}>
@@ -117,7 +119,7 @@ export default function AboutSettings() {
               strokeWidth={2}
               style={updateStatus === 'checking' ? { animation: 'spin 0.8s linear infinite' } : undefined}
             />
-            {updateStatus === 'checking' ? '检查中...' : '检查更新'}
+            {updateStatus === 'checking' ? t('about.checking') : t('about.checkUpdate')}
           </button>
         </div>
 
@@ -125,7 +127,7 @@ export default function AboutSettings() {
           <div className={styles.updateStatus}>
             <div className={styles.updateStatusText} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Loader size={16} strokeWidth={2} style={{ animation: 'spin 0.8s linear infinite' }} />
-              正在检查更新，请稍候...
+              {t('about.checkingUpdate')}
             </div>
           </div>
         )}
@@ -133,11 +135,12 @@ export default function AboutSettings() {
         {updateStatus === 'available' && updateInfo && (
           <div className={`${styles.updateStatus} ${styles.updateStatusAvailable}`}>
             <div className={styles.updateStatusText}>
-              发现新版本 <strong>v{updateInfo.version}</strong>（当前 v{updateInfo.currentVersion}）
+              {t('about.newVersion')} <strong>v{updateInfo.version}</strong>
+              {t('about.currentVersion').replace('{version}', updateInfo.currentVersion)}
             </div>
             {updateInfo.releaseDate && (
               <div className={styles.updateStatusText} style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>
-                发布日期：{updateInfo.releaseDate}
+                {t('about.releaseDate').replace('{date}', updateInfo.releaseDate)}
               </div>
             )}
             {updateInfo.releaseNotes && (
@@ -149,8 +152,8 @@ export default function AboutSettings() {
                 className={styles.primaryBtn}
                 onClick={handleDownload}
               >
-                <Download size={16} strokeWidth={2} />
-                下载新版本
+                <Download size={16} />
+                {t('about.download')}
               </button>
             </div>
           </div>
@@ -160,7 +163,7 @@ export default function AboutSettings() {
           <div className={styles.updateStatus}>
             <div className={styles.updateStatusText} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Info size={16} strokeWidth={2} />
-              当前已是最新版本，无需更新
+              {t('about.latest')}
             </div>
           </div>
         )}
@@ -169,7 +172,7 @@ export default function AboutSettings() {
           <div className={styles.updateStatus} style={{ borderColor: 'rgba(255, 59, 48, 0.25)', background: 'rgba(255, 59, 48, 0.05)' }}>
             <div className={styles.updateStatusText} style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--danger-text)' }}>
               <AlertCircle size={16} strokeWidth={2} />
-              检查更新失败：{errorMsg}
+              {t('about.checkFailed')}：{errorMsg}
             </div>
           </div>
         )}
@@ -178,12 +181,12 @@ export default function AboutSettings() {
       {/* 加入我们 */}
       <section className={`liquid-glass ${styles.card}`}>
         <div className={styles.cardHeader}>
-          <h2 className={styles.cardTitle}>加入我们</h2>
-          <p className={styles.cardDesc}>添加开发者微信，交流反馈或参与项目共建</p>
+          <h2 className={styles.cardTitle}>{t('about.joinUs')}</h2>
+          <p className={styles.cardDesc}>{t('about.joinUsDesc')}</p>
         </div>
 
         <div className={styles.infoRow}>
-          <span className={styles.infoLabel}>微信号</span>
+          <span className={styles.infoLabel}>{t('about.wechat')}</span>
           <span className={styles.infoValue} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             <MessageCircle size={16} strokeWidth={2} />
             Eikawa_Koi
@@ -196,12 +199,12 @@ export default function AboutSettings() {
               {copied ? (
                 <>
                   <Check size={14} strokeWidth={2} />
-                  已复制
+                  {t('about.copied')}
                 </>
               ) : (
                 <>
                   <Copy size={14} strokeWidth={2} />
-                  复制
+                  {t('about.copy')}
                 </>
               )}
             </button>
