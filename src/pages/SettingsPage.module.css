@@ -454,26 +454,28 @@
 
 .themeToggle {
   display: inline-flex;
-  gap: 4px;
+  gap: 2px;
   padding: 4px;
   border-radius: var(--radius-pill);
   background: rgba(0, 0, 0, 0.05);
+  flex-wrap: wrap;
 }
 
 .themeOption {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 18px;
+  gap: 5px;
+  padding: 7px 12px;
   border: none;
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   transition: all 0.25s ease;
+  white-space: nowrap;
 }
 
 .themeOption:hover {

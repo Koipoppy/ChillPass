@@ -29,6 +29,28 @@ export function setupElectronMock() {
         input.click()
       })
     },
+    openImageDialog: async () => {
+      return new Promise((resolve) => {
+        const input = document.createElement('input')
+        input.type = 'file'
+        input.accept = 'image/*'
+        input.onchange = (e) => {
+          const files = (e.target as HTMLInputElement).files
+          if (!files || files.length === 0) {
+            resolve(null)
+            return
+          }
+          const result = Array.from(files).map(f => ({
+            path: (f as File & { path?: string }).path || f.name,
+            name: f.name,
+            ext: '.' + (f.name.split('.').pop() || '').toLowerCase(),
+            size: f.size,
+          }))
+          resolve(result)
+        }
+        input.click()
+      })
+    },
     openDirectoryDialog: async () => {
       const path = window.prompt('输入存储目录路径（浏览器预览模拟）')
       return path || null
@@ -36,6 +58,7 @@ export function setupElectronMock() {
     readFileBuffer: async (_filePath: string) => {
       return new ArrayBuffer(0)
     },
+    ocrRecognize: async (_filePath: string) => '',
     readTextFile: async (_filePath: string) => {
       return ''
     },
@@ -63,6 +86,13 @@ export function setupElectronMock() {
     platform: 'win32',
     // 应用版本
     getAppVersion: async () => '1.0.0',
+    // 应用路径与存储占用
+    getAppPaths: async () => ({
+      installPath: 'C:\\Program Files\\ChillPass',
+      userDataPath: 'C:\\Users\\user\\AppData\\Roaming\\ChillPass',
+      tempPath: 'C:\\Users\\user\\AppData\\Local\\Temp',
+    }),
+    getStorageSize: async () => 0,
     // 更新检查
     checkForUpdates: async () => null,
     openExternalUrl: async (url: string) => {

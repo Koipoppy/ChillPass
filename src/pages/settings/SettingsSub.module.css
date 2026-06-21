@@ -1,5 +1,24 @@
 /* ===== 设置子页面共享样式 ===== */
 
+.linkBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 113, 227, 0.08);
+  color: var(--accent-text);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.linkBtn:hover {
+  background: rgba(0, 113, 227, 0.15);
+}
+
 .subPage {
   max-width: 720px;
   margin: 0 auto;
@@ -316,6 +335,139 @@
   font-size: 11px;
   font-weight: 600;
   color: var(--text-tertiary);
+}
+
+/* ===== 存储信息路径行 ===== */
+.pathList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pathRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.pathRowIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 113, 227, 0.1);
+  color: var(--accent-text);
+}
+
+.pathRowContent {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pathLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.pathRowValue {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  font-family: "SF Mono", "Menlo", "Consolas", monospace;
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+.pathValueHint {
+  margin-left: 6px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-family: inherit;
+}
+
+/* ===== 按课程占用 ===== */
+.courseSizeList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.courseSizeTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.courseSizeRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.courseSizeHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.courseSizeName {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.courseSizeValue {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-family: "SF Mono", "Menlo", "Consolas", monospace;
+}
+
+.courseSizeBar {
+  width: 100%;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.courseSizeBarFill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--accent-text);
+  transition: width 0.3s ease;
+}
+
+/* ===== 存储进度条 ===== */
+.storageBar {
+  width: 100%;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.storageBarFill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--accent-text), rgba(0, 113, 227, 0.7));
+  transition: width 0.3s ease;
 }
 
 /* ===== 信息行 ===== */

@@ -3,12 +3,15 @@ import { contextBridge, ipcRenderer } from 'electron'
 const api = {
   // 文件对话框
   openFileDialog: () => ipcRenderer.invoke('dialog:openFile'),
+  openImageDialog: () => ipcRenderer.invoke('dialog:openImage'),
 
   // 目录对话框
   openDirectoryDialog: () => ipcRenderer.invoke('dialog:openDirectory'),
 
   // 读取文件（Buffer，用于 PDF 解析）
   readFileBuffer: (filePath: string) => ipcRenderer.invoke('file:readBuffer', filePath),
+  // 图片 OCR 识别
+  ocrRecognize: (filePath: string) => ipcRenderer.invoke('ocr:recognize', filePath),
 
   // 读取文本文件
   readTextFile: (filePath: string) => ipcRenderer.invoke('file:readText', filePath),
@@ -43,6 +46,10 @@ const api = {
 
   // 应用版本
   getAppVersion: () => ipcRenderer.invoke('app:getVersion'),
+
+  // 应用路径与存储占用
+  getAppPaths: () => ipcRenderer.invoke('app:getPaths'),
+  getStorageSize: () => ipcRenderer.invoke('app:getStorageSize'),
 
   // 更新检查
   checkForUpdates: () => ipcRenderer.invoke('update:check'),

@@ -1,6 +1,6 @@
 {
   "name": "chillpass",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "ChillPass - 期末冲刺助手 | AI 驱动的闯关式备考应用",
   "main": "dist-electron/main.js",
   "author": "ChillPass",
@@ -15,9 +15,11 @@
     "electron:preview": "vite build && electron ."
   },
   "dependencies": {
+    "@types/katex": "^0.16.8",
     "dompurify": "^3.1.6",
     "framer-motion": "^12.40.0",
     "jszip": "^3.10.1",
+    "katex": "^0.17.0",
     "lucide-react": "^0.427.0",
     "marked": "^14.0.0",
     "nanoid": "^5.0.7",

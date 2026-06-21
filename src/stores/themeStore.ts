@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-export type Theme = 'light' | 'dark'
+export type Theme = 'light' | 'dark' | 'vista' | 'win95'
 
 interface ThemeState {
   theme: Theme
@@ -36,9 +36,17 @@ export const useThemeStore = create<ThemeState>()(
 
 function applyTheme(theme: Theme) {
   const root = document.documentElement
+  // Remove all theme attributes first
+  root.removeAttribute('data-theme')
+  root.removeAttribute('data-theme-vista')
+  root.removeAttribute('data-theme-win95')
+
   if (theme === 'dark') {
     root.setAttribute('data-theme', 'dark')
-  } else {
-    root.removeAttribute('data-theme')
+  } else if (theme === 'vista') {
+    root.setAttribute('data-theme', 'vista')
+  } else if (theme === 'win95') {
+    root.setAttribute('data-theme', 'win95')
   }
+  // light = no attribute (default)
 }

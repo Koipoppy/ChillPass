@@ -108,6 +108,27 @@ ipcMain.handle('dialog:openFile', async () => {
   }))
 })
 
+// 选择图片文件对话框
+ipcMain.handle('dialog:openImage', async () => {
+  const result = await dialog.showOpenDialog(mainWindow!, {
+    title: '选择图片文件',
+    filters: [
+      { name: '图片文件', extensions: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'] },
+      { name: '所有文件', extensions: ['*'] }
+    ],
+    properties: ['openFile', 'multiSelections']
+  })
+
+  if (result.canceled) return null
+
+  return result.filePaths.map(filePath => ({
+    path: filePath,
+    name: path.basename(filePath),
+    ext: path.extname(filePath).toLowerCase(),
+    size: fs.statSync(filePath).size
+  }))
+})
+
 // 选择目录对话框
 ipcMain.handle('dialog:openDirectory', async () => {
   const result = await dialog.showOpenDialog(mainWindow!, {
@@ -139,6 +160,48 @@ ipcMain.handle('app:getUserDataPath', () => {
 
 ipcMain.handle('app:getVersion', () => {
   return app.getVersion()
+})
+
+// ===== 图片 OCR 识别 =====
+ipcMain.handle('ocr:recognize', async (_event, filePath: string) => {
+  try {
+    // 动态导入 tesseract.js，避免在浏览器环境中加载
+    const Tesseract = await import('tesseract.js')
+    const result = await Tesseract.recognize(filePath, 'chi_sim+eng', {
+      logger: () => {},
+    })
+    return result.data.text.trim()
+  } catch (err) {
+    throw new Error(`图片识别失败: ${err instanceof Error ? err.message : '未知错误'}`)
+  }
+})
+
+// ===== 应用信息 =====
+
+ipcMain.handle('app:getPaths', () => {
+  return {
+    installPath: app.getAppPath(),
+    userDataPath: app.getPath('userData'),
+    tempPath: app.getPath('temp'),
+  }
+})
+
+ipcMain.handle('app:getStorageSize', async () => {
+  const userDataPath = app.getPath('userData')
+  // 计算 Local Storage 的占用（localStorage 数据存储在 app 的 userData 目录下）
+  let totalSize = 0
+  try {
+    // 读取 Local Storage 目录
+    const lsDir = path.join(userDataPath, 'Local Storage', 'leveldb')
+    if (fs.existsSync(lsDir)) {
+      const files = fs.readdirSync(lsDir)
+      for (const file of files) {
+        const stat = fs.statSync(path.join(lsDir, file))
+        totalSize += stat.size
+      }
+    }
+  } catch {}
+  return totalSize
 })
 
 // ===== 更新检查 =====

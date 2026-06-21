@@ -1,36 +1,36 @@
 /**
  * 图片识别服务
- * 由于 DeepSeek API 目前不支持原生识图，采用本地 OCR 方案：
- * 使用 Tesseract.js 在本地进行文字识别，然后将识别出的文字发送给 DeepSeek
+ * 优先使用 Electron 主进程中的 tesseract.js 进行 OCR（生产环境可靠）
+ * 回退到渲染进程中的 tesseract.js（开发环境）
  */
-
-import Tesseract from 'tesseract.js'
 
 /**
  * 从图片文件中识别文字
- * @param filePath 图片文件路径（Electron 环境）或 File 对象（浏览器环境）
+ * @param input File 对象（浏览器）或文件路径（Electron）
  * @returns 识别出的文字内容
  */
 export async function recognizeImageText(
   input: string | File | ArrayBuffer
 ): Promise<string> {
-  let imageData: string | File | Buffer
+  // 优先使用 Electron 主进程 OCR（生产环境可靠）
+  if (typeof input === 'string' && window.electronAPI?.ocrRecognize) {
+    return window.electronAPI.ocrRecognize(input)
+  }
 
+  // 回退：在渲染进程中使用 tesseract.js
+  let imageData: string | File | Buffer
   if (typeof input === 'string') {
-    // Electron 环境：读取文件路径
-    // 注意：tesseract.js 的 recognize 方法可以直接接受文件路径
     imageData = input
   } else if (input instanceof File) {
-    // 浏览器环境：直接使用 File 对象
     imageData = input
   } else {
-    // ArrayBuffer
     imageData = input
   }
 
   try {
+    const Tesseract = await import('tesseract.js')
     const result = await Tesseract.recognize(imageData, 'chi_sim+eng', {
-      logger: () => {}, // 静默模式，不输出日志
+      logger: () => {},
     })
     return result.data.text.trim()
   } catch (err) {

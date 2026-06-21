@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Eye, EyeOff, Save, Check } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff, Save, Check, ExternalLink } from 'lucide-react'
 import { useSettingsStore } from '@stores/settingsStore'
 import styles from './SettingsSub.module.css'
 
@@ -80,6 +80,16 @@ export default function ApiSettings() {
             </button>
           </div>
           <p className={styles.hint}>可在 DeepSeek 开放平台获取，数据仅保存在本地</p>
+          <a
+            href="https://platform.deepseek.com/api_keys"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.linkBtn}
+            style={{ marginTop: '8px', display: 'inline-flex' }}
+          >
+            <ExternalLink size={14} strokeWidth={2} />
+            <span>前往 DeepSeek 开放平台获取 API Key</span>
+          </a>
         </div>
 
         <div className={styles.field}>

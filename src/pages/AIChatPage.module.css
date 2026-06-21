@@ -380,6 +380,20 @@
   margin: 12px 0;
 }
 
+/* ===== KaTeX 公式样式 ===== */
+.markdownContent :global(.katex) {
+  font-size: 1.05em;
+}
+.markdownContent :global(.katex-display) {
+  margin: 12px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 0;
+}
+.markdownContent :global(.katex-display::-webkit-scrollbar) {
+  display: none;
+}
+
 /* ===== 输入区域 ===== */
 .inputArea {
   flex-shrink: 0;

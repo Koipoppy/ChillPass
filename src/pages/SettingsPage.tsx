@@ -14,6 +14,7 @@ import {
   Sparkles,
   Sun,
   Moon,
+  Monitor,
   Globe,
   Check,
 } from 'lucide-react'
@@ -272,6 +273,22 @@ export default function SettingsPage() {
             >
               <Moon size={14} strokeWidth={2} />
               {t('settings.themeDark')}
+            </button>
+            <button
+              type="button"
+              className={`${styles.themeOption} ${theme === 'vista' ? styles.themeOptionActive : ''}`}
+              onClick={() => setTheme('vista')}
+            >
+              <Sparkles size={14} strokeWidth={2} />
+              Vista
+            </button>
+            <button
+              type="button"
+              className={`${styles.themeOption} ${theme === 'win95' ? styles.themeOptionActive : ''}`}
+              onClick={() => setTheme('win95')}
+            >
+              <Monitor size={14} strokeWidth={2} />
+              Win95
             </button>
           </div>
         </div>

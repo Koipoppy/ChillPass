@@ -2,13 +2,12 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import type { KeyboardEvent as ReactKeyboardEvent, ChangeEvent as ReactChangeEvent, PointerEvent as ReactPointerEvent } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Send, MessageCircle, Trash2, Sparkles, ImageIcon, Loader, X } from 'lucide-react'
-import { marked } from 'marked'
-import DOMPurify from 'dompurify'
 import { useChatStore } from '@stores/chatStore'
 import { useCurrentBundle } from '@stores/courseStore'
 import { chatWithTutor } from '@services/deepseek'
 import { recognizeImageText, fileToDataURL } from '@services/imageService'
 import type { ChatMessage } from '@types/index'
+import { renderMarkdown } from '../utils/markdown'
 import styles from './AIChatPage.module.css'
 
 // 建议问题
@@ -17,18 +16,6 @@ const SUGGESTIONS = [
   '用大白话解释重点',
   '帮我制定复习计划',
 ]
-
-// 配置 Markdown 渲染
-marked.setOptions({
-  breaks: true,
-  gfm: true,
-})
-
-/** 将 Markdown 内容渲染为安全的 HTML */
-function renderMarkdown(content: string): string {
-  const rawHtml = marked.parse(content) as string
-  return DOMPurify.sanitize(rawHtml)
-}
 
 /** 单条消息气泡 */
 function MessageBubble({
@@ -134,23 +121,42 @@ export default function AIChatPage() {
     setShowScrollHandle(textarea.scrollHeight > textarea.clientHeight)
   }, [input])
 
-  // 选择图片：转 data URL 预览 + 本地 OCR 识别文字
+  // 选择图片：Electron 环境用文件对话框获取路径，浏览器环境用 input
   const handleImagePick = useCallback(
-    async (e: ReactChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0]
-      // 重置 input，便于重复选择同一文件
-      e.target.value = ''
-      if (!file) return
+    async (e?: ReactChangeEvent<HTMLInputElement>) => {
+      let filePath: string | null = null
+      let file: File | null = null
+
+      if (e) {
+        // 浏览器环境：从 input 获取 File
+        file = e.target.files?.[0] ?? null
+        e.target.value = ''
+        if (!file) return
+      } else if (window.electronAPI?.openImageDialog) {
+        // Electron 环境：用文件对话框获取路径
+        const result = await window.electronAPI.openImageDialog()
+        if (!result || result.length === 0) return
+        filePath = result[0].path
+      } else {
+        return
+      }
 
       try {
         // 先生成预览
-        const dataUrl = await fileToDataURL(file)
-        setAttachedImage(dataUrl)
+        if (file) {
+          const dataUrl = await fileToDataURL(file)
+          setAttachedImage(dataUrl)
+        } else if (filePath && window.electronAPI?.readFileBuffer) {
+          const buffer = await window.electronAPI.readFileBuffer(filePath)
+          const dataUrl = await fileToDataURL(buffer)
+          setAttachedImage(dataUrl)
+        }
+
         setRecognizedText(null)
         setImageRecognizing(true)
 
-        // 本地 OCR 识别
-        const text = await recognizeImageText(file)
+        // OCR 识别：优先用文件路径（Electron 主进程），否则用 File 对象
+        const text = await recognizeImageText(filePath ?? file!)
         setRecognizedText(text)
       } catch (err) {
         console.error('图片识别失败', err)
@@ -383,7 +389,13 @@ export default function AIChatPage() {
           {/* 图片上传按钮 */}
           <button
             className={`${styles.imageBtn} ${!canAttachImage ? styles.imageBtnDisabled : ''}`}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => {
+              if (window.electronAPI?.openImageDialog) {
+                handleImagePick()
+              } else {
+                fileInputRef.current?.click()
+              }
+            }}
             disabled={!canAttachImage}
             title="插入图片"
           >

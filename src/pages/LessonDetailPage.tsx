@@ -16,6 +16,7 @@ import { useCourseStore, useCurrentBundle } from '@stores/courseStore'
 import { useWrongQuestionStore } from '@stores/wrongQuestionStore'
 import { generateLessonContent } from '@services/deepseek'
 import type { Priority } from '@types/index'
+import { renderMarkdown, renderInlineMarkdown } from '../utils/markdown'
 import styles from './LessonDetailPage.module.css'
 
 const priorityLabel: Record<Priority, string> = {
@@ -212,7 +213,10 @@ export default function LessonDetailPage() {
                 {content.keyPoints.map((point, i) => (
                   <li key={i} className={styles.keyPoint}>
                     <span className={styles.keyPointDot} />
-                    <span>{point}</span>
+                    <span
+                      className={styles.markdownContent}
+                      dangerouslySetInnerHTML={{ __html: renderInlineMarkdown(point) }}
+                    />
                   </li>
                 ))}
               </ul>
@@ -221,7 +225,10 @@ export default function LessonDetailPage() {
                 <PenTool size={18} strokeWidth={2} />
                 详细解释
               </h2>
-              <p className={styles.explanation}>{content.explanation}</p>
+              <div
+                className={`${styles.explanation} ${styles.markdownContent}`}
+                dangerouslySetInnerHTML={{ __html: renderMarkdown(content.explanation) }}
+              />
             </div>
           )}
 
@@ -236,21 +243,30 @@ export default function LessonDetailPage() {
               {content.examples.map((ex, i) => (
                 <div key={i} className={`${styles.exampleCard} liquid-glass`}>
                   <div className={styles.exampleHeader}>例题 {i + 1}</div>
-                  <div className={styles.exampleQuestion}>{ex.question}</div>
+                  <div
+                    className={`${styles.exampleQuestion} ${styles.markdownContent}`}
+                    dangerouslySetInnerHTML={{ __html: renderMarkdown(ex.question) }}
+                  />
                   {ex.steps && ex.steps.length > 0 && (
                     <div className={styles.exampleSteps}>
                       <div className={styles.stepsLabel}>解题步骤</div>
                       {ex.steps.map((step, j) => (
                         <div key={j} className={styles.step}>
                           <span className={styles.stepIndex}>{j + 1}</span>
-                          <span>{step}</span>
+                          <span
+                            className={styles.markdownContent}
+                            dangerouslySetInnerHTML={{ __html: renderInlineMarkdown(step) }}
+                          />
                         </div>
                       ))}
                     </div>
                   )}
                   <div className={styles.exampleAnswer}>
                     <span className={styles.answerLabel}>答案</span>
-                    <span className={styles.answerText}>{ex.answer}</span>
+                    <span
+                      className={`${styles.answerText} ${styles.markdownContent}`}
+                      dangerouslySetInnerHTML={{ __html: renderInlineMarkdown(ex.answer) }}
+                    />
                   </div>
                 </div>
               ))}
@@ -271,7 +287,10 @@ export default function LessonDetailPage() {
                 return (
                   <div key={q.id} className={`${styles.quizCard} liquid-glass`}>
                     <div className={styles.quizHeader}>问题 {i + 1}</div>
-                    <div className={styles.quizQuestion}>{q.question}</div>
+                    <div
+                      className={`${styles.quizQuestion} ${styles.markdownContent}`}
+                      dangerouslySetInnerHTML={{ __html: renderMarkdown(q.question) }}
+                    />
                     <div className={styles.quizOptions}>
                       {q.options.map((opt, oi) => {
                         const isCorrect = oi === q.correctIndex
@@ -296,7 +315,10 @@ export default function LessonDetailPage() {
                             <span className={styles.optionLabel}>
                               {String.fromCharCode(65 + oi)}
                             </span>
-                            <span className={styles.optionText}>{opt}</span>
+                            <span
+                              className={`${styles.optionText} ${styles.markdownContent}`}
+                              dangerouslySetInnerHTML={{ __html: renderInlineMarkdown(opt) }}
+                            />
                             {answered && isCorrect && (
                               <Check size={16} className={styles.optionIcon} />
                             )}
@@ -318,7 +340,10 @@ export default function LessonDetailPage() {
                         <span className={styles.explanationLabel}>
                           {selected === q.correctIndex ? '回答正确' : '回答错误'}
                         </span>
-                        <span>{q.explanation}</span>
+                        <span
+                          className={styles.markdownContent}
+                          dangerouslySetInnerHTML={{ __html: renderInlineMarkdown(q.explanation) }}
+                        />
                       </div>
                     )}
                   </div>

@@ -190,8 +190,10 @@ export interface FileInfo {
 
 export interface ElectronAPI {
   openFileDialog: () => Promise<FileInfo[] | null>
+  openImageDialog: () => Promise<FileInfo[] | null>
   openDirectoryDialog: () => Promise<string | null>
   readFileBuffer: (filePath: string) => Promise<ArrayBuffer>
+  ocrRecognize: (filePath: string) => Promise<string>
   readTextFile: (filePath: string) => Promise<string>
   getUserDataPath: () => Promise<string>
   windowMinimize: () => void
@@ -208,6 +210,9 @@ export interface ElectronAPI {
   platform: string
   // 应用版本
   getAppVersion: () => Promise<string>
+  // 应用路径与存储占用
+  getAppPaths: () => Promise<{ installPath: string; userDataPath: string; tempPath: string }>
+  getStorageSize: () => Promise<number>
   // 更新检查
   checkForUpdates: () => Promise<UpdateInfo | null>
   openExternalUrl: (url: string) => Promise<void>
