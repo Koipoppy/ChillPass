@@ -24,6 +24,9 @@ function createWindow() {
     titleBarStyle: 'hidden',
     frame: false,
     backgroundColor: '#f5f5f7',
+    // Windows 11 圆角窗口（与界面元素的 --radius-xl: 32px 视觉统一）
+    // Windows 10 及以下会自动忽略此属性，使用直角
+    roundedCorners: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

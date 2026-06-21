@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
-import { Send, MessageCircle, Trash2, Sparkles } from 'lucide-react'
+import type { KeyboardEvent as ReactKeyboardEvent, ChangeEvent as ReactChangeEvent } from 'react'
+import { useLocation } from 'react-router-dom'
+import { Send, MessageCircle, Trash2, Sparkles, ImageIcon, Loader, X } from 'lucide-react'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { useChatStore } from '@stores/chatStore'
 import { useCurrentBundle } from '@stores/courseStore'
 import { chatWithTutor } from '@services/deepseek'
+import { recognizeImageText, fileToDataURL } from '@services/imageService'
 import type { ChatMessage } from '@types/index'
 import styles from './AIChatPage.module.css'
 
@@ -82,9 +84,24 @@ export default function AIChatPage() {
   const currentCourse = bundle?.course
 
   const [input, setInput] = useState('')
+  const [attachedImage, setAttachedImage] = useState<string | null>(null)
+  const [imageRecognizing, setImageRecognizing] = useState(false)
+  const [recognizedText, setRecognizedText] = useState<string | null>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const prevLengthRef = useRef(0)
+
+  const location = useLocation()
+
+  // 从错题本跳转过来时，预填内容并自动聚焦
+  useEffect(() => {
+    const prefill = (location.state as any)?.prefill
+    if (prefill) {
+      setInput(prefill)
+      textareaRef.current?.focus()
+    }
+  }, [location.state])
 
   // 自动滚动到底部：新消息用平滑滚动，流式更新用即时滚动
   useEffect(() => {
@@ -108,13 +125,55 @@ export default function AIChatPage() {
     textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`
   }, [input])
 
+  // 选择图片：转 data URL 预览 + 本地 OCR 识别文字
+  const handleImagePick = useCallback(
+    async (e: ReactChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      // 重置 input，便于重复选择同一文件
+      e.target.value = ''
+      if (!file) return
+
+      try {
+        // 先生成预览
+        const dataUrl = await fileToDataURL(file)
+        setAttachedImage(dataUrl)
+        setRecognizedText(null)
+        setImageRecognizing(true)
+
+        // 本地 OCR 识别
+        const text = await recognizeImageText(file)
+        setRecognizedText(text)
+      } catch (err) {
+        console.error('图片识别失败', err)
+        setRecognizedText(null)
+      } finally {
+        setImageRecognizing(false)
+      }
+    },
+    []
+  )
+
+  // 移除已附加的图片
+  const handleRemoveImage = useCallback(() => {
+    setAttachedImage(null)
+    setRecognizedText(null)
+    setImageRecognizing(false)
+  }, [])
+
   // 发送消息
   const handleSend = useCallback(
     async (text?: string) => {
-      const content = (text ?? input).trim()
-      if (!content || isStreaming) return
+      const rawContent = (text ?? input).trim()
+      if (!rawContent || isStreaming) return
+
+      // 若有图片识别结果，将其拼接到消息前面
+      const content = recognizedText
+        ? `[图片识别内容]\n${recognizedText}\n\n${rawContent}`
+        : rawContent
 
       setInput('')
+      setAttachedImage(null)
+      setRecognizedText(null)
 
       // 构建对话历史（不包含当前消息，chatWithTutor 会自行追加）
       const history = messages.map(m => ({
@@ -148,7 +207,7 @@ export default function AIChatPage() {
         setStreaming(false)
       }
     },
-    [input, isStreaming, messages, rawText, currentCourse, addMessage, updateMessage, setStreaming]
+    [input, isStreaming, messages, rawText, currentCourse, recognizedText, addMessage, updateMessage, setStreaming]
   )
 
   // 键盘事件：Enter 发送，Shift+Enter 换行
@@ -167,6 +226,7 @@ export default function AIChatPage() {
 
   const canSend = input.trim().length > 0 && !isStreaming
   const canClear = messages.length > 0 && !isStreaming
+  const canAttachImage = !isStreaming && !imageRecognizing
 
   return (
     <div className={styles.container}>
@@ -246,7 +306,59 @@ export default function AIChatPage() {
 
       {/* 输入区域 */}
       <div className={styles.inputArea}>
+        {/* 图片预览 */}
+        {attachedImage && (
+          <div className={`${styles.imagePreview} liquid-glass`}>
+            <div className={styles.imagePreviewInner}>
+              <img
+                src={attachedImage}
+                alt="附加图片"
+                className={styles.imageThumb}
+              />
+              <div className={styles.imagePreviewInfo}>
+                {imageRecognizing ? (
+                  <div className={styles.imageRecognizing}>
+                    <Loader size={14} className={styles.spin} />
+                    <span>识别中...</span>
+                  </div>
+                ) : recognizedText ? (
+                  <div className={styles.imagePreviewHint}>
+                    已识别图片文字
+                  </div>
+                ) : (
+                  <div className={styles.imagePreviewHint}>
+                    识别失败，可移除后重试
+                  </div>
+                )}
+              </div>
+              <button
+                className={styles.removeImageBtn}
+                onClick={handleRemoveImage}
+                title="移除图片"
+              >
+                <X size={14} strokeWidth={2.2} />
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className={`${styles.inputWrapper} liquid-glass`}>
+          {/* 图片上传按钮 */}
+          <button
+            className={`${styles.imageBtn} ${!canAttachImage ? styles.imageBtnDisabled : ''}`}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={!canAttachImage}
+            title="插入图片"
+          >
+            <ImageIcon size={18} strokeWidth={1.8} />
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={handleImagePick}
+          />
           <textarea
             ref={textareaRef}
             className={styles.textarea}

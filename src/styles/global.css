@@ -51,6 +51,8 @@
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 body {
@@ -62,12 +64,14 @@ body {
   overflow: hidden;
   background: var(--bg-base);
   user-select: none;
+  border-radius: 12px;
 }
 
 #root {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+  border-radius: 12px;
 }
 
 /* ===== 灰度波动背景 ===== */

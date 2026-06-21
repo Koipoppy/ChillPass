@@ -79,6 +79,28 @@ export interface QuizQuestion {
   explanation: string
 }
 
+/** 错题记录 */
+export interface WrongQuestion {
+  id: string
+  courseId: string
+  courseName: string
+  lessonId: string
+  lessonTitle: string
+  question: string
+  options: string[]
+  correctIndex: number
+  selectedIndex: number
+  explanation: string
+  /** 考点标题 */
+  examPointTitle: string
+  /** 优先级 */
+  priority: Priority
+  /** 记录时间 */
+  createdAt: number
+  /** 是否已掌握（从错题本移除标记） */
+  resolved: boolean
+}
+
 /** 聊天消息 */
 export interface ChatMessage {
   id: string

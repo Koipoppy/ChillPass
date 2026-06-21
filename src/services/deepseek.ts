@@ -152,19 +152,46 @@ export async function extractExamPoints(courseText: string, courseName: string):
 }
 
 /**
+ * 根据考点优先级决定小测题目数量
+ * - must（必考）：4-5 题，核心重点需要充分练习
+ * - high（高频）：3 题，需要巩固
+ * - know（了解）：2 题，基础检验即可
+ */
+function getQuizCount(priority: string): { min: number; max: number } {
+  switch (priority) {
+    case 'must':
+      return { min: 4, max: 5 }
+    case 'high':
+      return { min: 3, max: 3 }
+    case 'know':
+      return { min: 2, max: 2 }
+    default:
+      return { min: 2, max: 3 }
+  }
+}
+
+/**
  * 为单个考点生成关卡内容
  */
 export async function generateLessonContent(
   examPoint: ExamPoint,
   courseText: string
 ): Promise<LessonContent> {
+  const quizCount = getQuizCount(examPoint.priority)
+  const exampleCount = examPoint.priority === 'must' ? '2-3' : examPoint.priority === 'high' ? '1-2' : '1'
+
   const systemPrompt = `你是一位大学考试辅导老师，正在为学生准备冲刺复习内容。
 
 请为给定考点生成一个 5-10 分钟的闯关学习内容，包含：
 1. 核心知识点（3-5 个要点）
 2. 详细解释（通俗易懂，200-400字）
-3. 例题（1-2 道，含详细步骤）
-4. 小测题（1 道，4 个选项，含解析）
+3. 例题（${exampleCount} 道，含详细步骤）
+4. 小测题（${quizCount.min}-${quizCount.max} 道，每题 4 个选项，含解析）
+
+小测题要求：
+- 题目难度递进，从基础到进阶
+- 干扰项要有迷惑性但明确错误
+- 每题解析要说明为什么对、为什么错
 
 返回 JSON 格式：
 {
@@ -199,7 +226,7 @@ ${courseText.slice(0, 6000)}`
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
     ],
-    { temperature: 0.5, maxTokens: 4096 }
+    { temperature: 0.5, maxTokens: 6144 }
   )
 
   try {

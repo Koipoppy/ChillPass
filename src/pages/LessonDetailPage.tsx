@@ -13,6 +13,7 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { useCourseStore, useCurrentBundle } from '@stores/courseStore'
+import { useWrongQuestionStore } from '@stores/wrongQuestionStore'
 import { generateLessonContent } from '@services/deepseek'
 import type { Priority } from '@types/index'
 import styles from './LessonDetailPage.module.css'
@@ -37,6 +38,7 @@ export default function LessonDetailPage() {
 
   const completeLesson = useCourseStore(s => s.completeLesson)
   const setLessonContent = useCourseStore(s => s.setLessonContent)
+  const addWrongQuestion = useWrongQuestionStore(s => s.addWrongQuestion)
 
   const lesson = lessons.find(l => l.id === lessonId)
   const content = lesson?.content ?? null
@@ -98,6 +100,26 @@ export default function LessonDetailPage() {
   const handleAnswer = (questionId: string, optionIndex: number) => {
     if (answers[questionId] !== undefined) return // 已作答不可更改
     setAnswers(prev => ({ ...prev, [questionId]: optionIndex }))
+
+    // 答错时记录到错题本
+    if (content && examPoint && bundle) {
+      const q = content.quiz.find(item => item.id === questionId)
+      if (q && optionIndex !== q.correctIndex) {
+        addWrongQuestion({
+          courseId: bundle.course.id,
+          courseName: bundle.course.name,
+          lessonId: lesson!.id,
+          lessonTitle: lesson!.title,
+          question: q.question,
+          options: q.options,
+          correctIndex: q.correctIndex,
+          selectedIndex: optionIndex,
+          explanation: q.explanation,
+          examPointTitle: examPoint.title,
+          priority: lesson!.priority,
+        })
+      }
+    }
   }
 
   const allQuizAnswered = content

@@ -10,6 +10,7 @@ import {
   Plus,
   Trash2,
   BookOpen,
+  BookX,
   MessageCircle,
   Loader,
   Upload,
@@ -19,6 +20,7 @@ import {
   X,
 } from 'lucide-react'
 import { useCourseStore, useCurrentBundle } from '@stores/courseStore'
+import { useWrongQuestionStore } from '@stores/wrongQuestionStore'
 import type { Priority, CourseStatus } from '@types/index'
 import styles from './Dashboard.module.css'
 
@@ -36,6 +38,18 @@ const statusColor: Record<CourseStatus, string> = {
   ready: 'var(--success-text)',
 }
 
+const priorityLabel: Record<Priority, string> = {
+  must: '必考',
+  high: '高频',
+  know: '了解',
+}
+
+const priorityColor: Record<Priority, string> = {
+  must: 'var(--danger-text)',
+  high: 'var(--warning-text)',
+  know: 'var(--accent-text)',
+}
+
 export default function Dashboard() {
   const navigate = useNavigate()
   const bundle = useCurrentBundle()
@@ -43,6 +57,9 @@ export default function Dashboard() {
   const currentCourseId = useCourseStore(s => s.currentCourseId)
   const switchCourse = useCourseStore(s => s.switchCourse)
   const deleteCourse = useCourseStore(s => s.deleteCourse)
+
+  const wrongQuestions = useWrongQuestionStore(s => s.questions)
+  const resolveQuestion = useWrongQuestionStore(s => s.resolveQuestion)
 
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const switcherRef = useRef<HTMLDivElement>(null)
@@ -81,6 +98,17 @@ export default function Dashboard() {
     })
     return stats
   }, [bundle?.examPoints])
+
+  // 当前课程的未解决错题
+  const courseWrongQuestions = useMemo(
+    () =>
+      bundle
+        ? wrongQuestions.filter(
+            q => q.courseId === bundle.course.id && !q.resolved
+          )
+        : [],
+    [wrongQuestions, bundle?.course.id]
+  )
 
   const handleDelete = (id: string, name: string) => {
     if (window.confirm(`确定要删除课程「${name}」吗？此操作不可撤销。`)) {
@@ -555,6 +583,86 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* 我的错题本 */}
+      <section className={`${styles.wrongSection} fade-in`}>
+        <div className={styles.wrongHeader}>
+          <div className={styles.wrongTitle}>
+            <BookX size={20} strokeWidth={1.8} />
+            <span>我的错题本</span>
+          </div>
+          <span className={styles.wrongCount}>
+            {courseWrongQuestions.length}
+          </span>
+        </div>
+
+        {courseWrongQuestions.length === 0 ? (
+          <div className={`liquid-glass ${styles.wrongEmpty}`}>
+            <Check size={24} strokeWidth={1.8} />
+            <span>暂无错题，继续保持！</span>
+          </div>
+        ) : (
+          <div className={styles.wrongList}>
+            {courseWrongQuestions.map(q => (
+              <div key={q.id} className={`liquid-glass ${styles.wrongCard}`}>
+                <div className={styles.wrongCardHeader}>
+                  <span
+                    className={styles.wrongPriority}
+                    style={{ color: priorityColor[q.priority] }}
+                  >
+                    {priorityLabel[q.priority]}
+                  </span>
+                  <span className={styles.wrongLessonTitle}>
+                    {q.lessonTitle}
+                  </span>
+                </div>
+
+                <div className={styles.wrongQuestion}>{q.question}</div>
+
+                <div className={styles.wrongAnswers}>
+                  <div
+                    className={`${styles.wrongAnswerRow} ${styles.wrongAnswerWrong}`}
+                  >
+                    <span className={styles.wrongAnswerLabel}>你的答案</span>
+                    <span>{q.options[q.selectedIndex]}</span>
+                  </div>
+                  <div
+                    className={`${styles.wrongAnswerRow} ${styles.wrongAnswerCorrect}`}
+                  >
+                    <span className={styles.wrongAnswerLabel}>正确答案</span>
+                    <span>{q.options[q.correctIndex]}</span>
+                  </div>
+                </div>
+
+                <div className={styles.wrongExplanation}>{q.explanation}</div>
+
+                <div className={styles.wrongCardActions}>
+                  <button
+                    className={styles.wrongActionBtn}
+                    onClick={() =>
+                      navigate('/chat', {
+                        state: {
+                          prefill: `我在「${q.lessonTitle}」这关遇到了一道错题：\n题目：${q.question}\n我选了：${q.options[q.selectedIndex]}\n正确答案：${q.options[q.correctIndex]}\n请帮我理解这个知识点。`,
+                        },
+                      })
+                    }
+                  >
+                    <MessageCircle size={16} strokeWidth={2} />
+                    <span>去问助教</span>
+                  </button>
+                  <button
+                    className={styles.wrongResolveBtn}
+                    onClick={() => resolveQuestion(q.id)}
+                  >
+                    <Check size={16} strokeWidth={2} />
+                    <span>已掌握</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   )
 }

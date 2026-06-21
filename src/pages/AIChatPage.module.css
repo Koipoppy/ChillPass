@@ -385,6 +385,83 @@
   flex-shrink: 0;
 }
 
+/* ===== 图片预览 ===== */
+.imagePreview {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+}
+
+.imagePreviewInner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.imageThumb {
+  max-height: 100px;
+  max-width: 140px;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.imagePreviewInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.imagePreviewHint {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.imageRecognizing {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.removeImageBtn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.removeImageBtn:hover {
+  background: rgba(0, 0, 0, 0.15);
+  color: var(--text-primary);
+}
+
 .inputWrapper {
   display: flex;
   align-items: flex-end;
@@ -442,6 +519,40 @@
 }
 
 .sendBtnDisabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ===== 图片上传按钮 ===== */
+.imageBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+
+.imageBtn:hover:not(.imageBtnDisabled) {
+  background: var(--glass-bg-hover);
+  color: var(--text-primary);
+  transform: scale(1.06);
+}
+
+.imageBtn:active:not(.imageBtnDisabled) {
+  transform: scale(0.96);
+}
+
+.imageBtnDisabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
