@@ -1,6 +1,6 @@
 {
   "name": "chillpass",
-  "version": "1.0.0-dev",
+  "version": "0.9.0",
   "description": "ChillPass - 期末冲刺助手 | AI 驱动的闯关式备考应用",
   "main": "dist-electron/main.js",
   "author": "ChillPass",
@@ -44,7 +44,10 @@
     "appId": "com.chillpass.app",
     "productName": "ChillPass",
     "copyright": "Copyright © 2026 ChillPass",
-    "publish": null,
+    "publish": {
+      "provider": "generic",
+      "url": ""
+    },
     "directories": {
       "output": "release",
       "buildResources": "public"
