@@ -68,8 +68,8 @@ export default function Sidebar() {
                 }}
               />
             </div>
-            <div className={styles.progressXP}>
-              <span style={{ color: 'var(--success-text)' }}>{progress!.totalXP} XP</span>
+            <div className={styles.progressCoins}>
+              <span style={{ color: 'var(--success-text)' }}>{progress!.chillCoins ?? 0} Chill币</span>
               {bundle!.generatingLessons && (
                 <span className={styles.generatingBadge}>{t('nav.generating')}</span>
               )}

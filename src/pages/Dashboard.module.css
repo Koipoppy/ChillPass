@@ -165,6 +165,84 @@
   opacity: 0.7;
 }
 
+.courseSwitcherRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.renameBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.renameBtn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .renameBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.renameBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.renameInput {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  padding: 2px 8px;
+  border: 2px solid var(--accent-text);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  outline: none;
+  width: 320px;
+}
+
+.renameConfirm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--success-text);
+  color: white;
+  cursor: pointer;
+}
+
+.renameCancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+
+[data-theme="dark"] .renameCancel {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 .courseName {
   font-size: 32px;
   font-weight: 700;
@@ -450,7 +528,7 @@
   font-size: 13px;
 }
 
-.xpItem {
+.coinsItem {
   display: inline-flex;
   align-items: center;
   gap: 4px;

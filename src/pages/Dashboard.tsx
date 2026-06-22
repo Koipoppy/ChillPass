@@ -4,7 +4,7 @@ import {
   Calendar,
   Flame,
   Trophy,
-  Zap,
+  Coins,
   ArrowRight,
   ChevronDown,
   Plus,
@@ -18,6 +18,7 @@ import {
   FileText,
   Check,
   X,
+  Pencil,
 } from 'lucide-react'
 import { useCourseStore, useCurrentBundle } from '@stores/courseStore'
 import { useWrongQuestionStore } from '@stores/wrongQuestionStore'
@@ -56,13 +57,17 @@ export default function Dashboard() {
   const courses = useCourseStore(s => s.courses)
   const currentCourseId = useCourseStore(s => s.currentCourseId)
   const switchCourse = useCourseStore(s => s.switchCourse)
+  const renameCourse = useCourseStore(s => s.renameCourse)
   const deleteCourse = useCourseStore(s => s.deleteCourse)
 
   const wrongQuestions = useWrongQuestionStore(s => s.questions)
   const resolveQuestion = useWrongQuestionStore(s => s.resolveQuestion)
 
   const [switcherOpen, setSwitcherOpen] = useState(false)
+  const [renaming, setRenaming] = useState(false)
+  const [renameValue, setRenameValue] = useState('')
   const switcherRef = useRef<HTMLDivElement>(null)
+  const renameInputRef = useRef<HTMLInputElement>(null)
 
   // 考试日期设置
   const setExamDate = useCourseStore(s => s.setExamDate)
@@ -202,17 +207,71 @@ export default function Dashboard() {
     <header className={styles.header}>
       <div className={styles.switcherWrap} ref={switcherRef}>
         <p className={styles.greeting}>欢迎回来</p>
-        <button
-          className={styles.courseSwitcher}
-          onClick={() => setSwitcherOpen(o => !o)}
-        >
-          <span className={styles.courseName}>{course.name}</span>
-          <ChevronDown
-            size={20}
-            strokeWidth={2}
-            className={`${styles.chevron} ${switcherOpen ? styles.chevronOpen : ''}`}
-          />
-        </button>
+        {renaming ? (
+          <div className={styles.renameBar}>
+            <input
+              ref={renameInputRef}
+              className={styles.renameInput}
+              value={renameValue}
+              onChange={e => setRenameValue(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  renameCourse(currentCourseId, renameValue)
+                  setRenaming(false)
+                } else if (e.key === 'Escape') {
+                  setRenaming(false)
+                }
+              }}
+              onBlur={() => {
+                if (renameValue.trim()) {
+                  renameCourse(currentCourseId, renameValue)
+                }
+                setRenaming(false)
+              }}
+              autoFocus
+            />
+            <button
+              className={styles.renameConfirm}
+              onClick={() => {
+                renameCourse(currentCourseId, renameValue)
+                setRenaming(false)
+              }}
+            >
+              <Check size={16} strokeWidth={2.5} />
+            </button>
+            <button
+              className={styles.renameCancel}
+              onClick={() => setRenaming(false)}
+            >
+              <X size={16} strokeWidth={2.5} />
+            </button>
+          </div>
+        ) : (
+          <div className={styles.courseSwitcherRow}>
+            <button
+              className={styles.courseSwitcher}
+              onClick={() => setSwitcherOpen(o => !o)}
+            >
+              <span className={styles.courseName}>{course.name}</span>
+              <ChevronDown
+                size={20}
+                strokeWidth={2}
+                className={`${styles.chevron} ${switcherOpen ? styles.chevronOpen : ''}`}
+              />
+            </button>
+            <button
+              className={styles.renameBtn}
+              onClick={() => {
+                setRenameValue(course.name)
+                setRenaming(true)
+                setTimeout(() => renameInputRef.current?.focus(), 0)
+              }}
+              title="重命名课程"
+            >
+              <Pencil size={14} strokeWidth={2} />
+            </button>
+          </div>
+        )}
 
         {switcherOpen && (
           <div className={`liquid-glass ${styles.dropdown}`}>
@@ -520,9 +579,9 @@ export default function Dashboard() {
             />
           </div>
           <div className={styles.progressMeta}>
-            <span className={styles.xpItem}>
-              <Zap size={14} strokeWidth={2} />
-              <span style={{ color: 'var(--success-text)' }}>{progress.totalXP} XP</span>
+            <span className={styles.coinsItem}>
+              <Coins size={14} strokeWidth={2} />
+              <span style={{ color: 'var(--success-text)' }}>{progress.chillCoins ?? 0} Chill币</span>
             </span>
             <span className={styles.progressPercent}>{progressPercent}%</span>
           </div>

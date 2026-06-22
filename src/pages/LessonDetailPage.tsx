@@ -29,13 +29,27 @@ const priorityLabel: Record<Priority, string> = {
   know: '了解',
 }
 
-/** 打乱选择题选项顺序，返回新 correctIndex */
+/** 打乱选择题选项顺序，返回新 correctIndex/correctIndices */
 function shuffleOptions(q: QuizQuestion): QuizQuestion {
-  if (!q.options || q.correctIndex === undefined) return q
-  const correctOption = q.options[q.correctIndex]
-  const shuffled = [...q.options].sort(() => Math.random() - 0.5)
-  const newCorrectIndex = shuffled.indexOf(correctOption)
-  return { ...q, options: shuffled, correctIndex: newCorrectIndex }
+  if (!q.options) return q
+
+  // 多选题
+  if (q.type === 'multi' && q.correctIndices) {
+    const correctOptions = q.correctIndices.map(i => q.options![i])
+    const shuffled = [...q.options].sort(() => Math.random() - 0.5)
+    const newCorrectIndices = correctOptions.map(opt => shuffled.indexOf(opt)).filter(i => i >= 0)
+    return { ...q, options: shuffled, correctIndices: newCorrectIndices }
+  }
+
+  // 单选题
+  if (q.correctIndex !== undefined) {
+    const correctOption = q.options[q.correctIndex]
+    const shuffled = [...q.options].sort(() => Math.random() - 0.5)
+    const newCorrectIndex = shuffled.indexOf(correctOption)
+    return { ...q, options: shuffled, correctIndex: newCorrectIndex }
+  }
+
+  return q
 }
 
 type Tab = 'points' | 'examples' | 'quiz'
@@ -68,6 +82,8 @@ export default function LessonDetailPage() {
   const [grading, setGrading] = useState(false)
   const [feedback, setFeedback] = useState<{ correct: boolean; text: string } | null>(null)
   const [choiceSelected, setChoiceSelected] = useState<number | null>(null)
+  const [multiSelected, setMultiSelected] = useState<Set<number>>(new Set())
+  const [multiSubmitted, setMultiSubmitted] = useState(false)
   const [revealed, setRevealed] = useState(false)
 
   // 切换关卡时重置本地状态
@@ -140,6 +156,62 @@ export default function LessonDetailPage() {
   const handleComplete = () => {
     completeLesson(lesson.id)
     navigate('/lessons')
+  }
+
+  /** 多选题：切换选项选择 */
+  const handleMultiToggle = (optionIndex: number) => {
+    if (multiSubmitted) return
+    setMultiSelected(prev => {
+      const next = new Set(prev)
+      if (next.has(optionIndex)) {
+        next.delete(optionIndex)
+      } else {
+        next.add(optionIndex)
+      }
+      return next
+    })
+  }
+
+  /** 多选题：提交答案 */
+  const handleMultiSubmit = () => {
+    const q = quizQuestions[quizPage]
+    if (!q || !q.correctIndices || multiSelected.size === 0) return
+
+    setMultiSubmitted(true)
+    const correctSet = new Set(q.correctIndices)
+    const isCorrect =
+      multiSelected.size === correctSet.size &&
+      [...multiSelected].every(i => correctSet.has(i))
+
+    if (isCorrect) {
+      setPageSolved(prev => new Set(prev).add(quizPage))
+    } else if (examPoint && bundle) {
+      addWrongQuestion({
+        courseId: bundle.course.id,
+        courseName: bundle.course.name,
+        lessonId: lesson.id,
+        lessonTitle: lesson.title,
+        question: q.question,
+        quizType: q.type,
+        options: q.options,
+        correctIndices: q.correctIndices,
+        selectedIndices: [...multiSelected],
+        explanation: q.explanation,
+        examPointTitle: examPoint.title,
+        priority: lesson.priority,
+      })
+    }
+  }
+
+  /** 多选题：再试一次（打乱选项） */
+  const handleRetryMulti = () => {
+    const q = quizQuestions[quizPage]
+    if (!q) return
+    const shuffled = shuffleOptions(q)
+    // 打乱后需要更新 correctIndices
+    setQuizQuestions(prev => prev.map((item, i) => (i === quizPage ? shuffled : item)))
+    setMultiSelected(new Set())
+    setMultiSubmitted(false)
   }
 
   /** 选择题：点击选项 */
@@ -250,6 +322,8 @@ export default function LessonDetailPage() {
       setTextAnswer('')
       setFeedback(null)
       setChoiceSelected(null)
+      setMultiSelected(new Set())
+      setMultiSubmitted(false)
       setRevealed(false)
     }
   }
@@ -261,6 +335,8 @@ export default function LessonDetailPage() {
       setTextAnswer('')
       setFeedback(null)
       setChoiceSelected(null)
+      setMultiSelected(new Set())
+      setMultiSubmitted(false)
       setRevealed(false)
     }
   }
@@ -287,7 +363,7 @@ export default function LessonDetailPage() {
             {priorityLabel[lesson.priority]}
           </span>
           <span className={styles.order}>第 {lesson.order} 关</span>
-          <span className={styles.xp}>{lesson.xp} XP</span>
+          <span className={styles.coins}>{lesson.coins} Chill币</span>
           {isCompleted && (
             <span className={styles.completedBadge}>
               <CheckCircle size={14} strokeWidth={2.2} />
@@ -455,7 +531,7 @@ export default function LessonDetailPage() {
                         <div className={styles.quizHeader}>
                           <span>问题 {quizPage + 1} / {quizQuestions.length}</span>
                           <span className={styles.quizTypeTag}>
-                            {qType === 'choice' ? '选择题' : qType === 'fill' ? '填空题' : '简答题'}
+                            {qType === 'choice' ? '单选题' : qType === 'multi' ? '多选题' : qType === 'fill' ? '填空题' : '简答题'}
                           </span>
                         </div>
                         <div
@@ -463,7 +539,7 @@ export default function LessonDetailPage() {
                           dangerouslySetInnerHTML={{ __html: renderMarkdown(q.question) }}
                         />
 
-                        {/* 选择题 */}
+                        {/* 单选题 */}
                         {qType === 'choice' && q.options && (
                           <div className={styles.quizOptions}>
                             {q.options.map((opt, oi) => {
@@ -503,6 +579,85 @@ export default function LessonDetailPage() {
                               )
                             })}
                           </div>
+                        )}
+
+                        {/* 多选题 */}
+                        {qType === 'multi' && q.options && (
+                          <>
+                            <div className={styles.quizOptions}>
+                              {q.options.map((opt, oi) => {
+                                const isCorrect = q.correctIndices?.includes(oi)
+                                const isSelected = multiSelected.has(oi)
+                                let cls = styles.quizOption
+                                if (multiSubmitted) {
+                                  if (isCorrect) {
+                                    cls = `${styles.quizOption} ${styles.quizOptionCorrect}`
+                                  } else if (isSelected) {
+                                    cls = `${styles.quizOption} ${styles.quizOptionWrong}`
+                                  } else {
+                                    cls = `${styles.quizOption} ${styles.quizOptionDim}`
+                                  }
+                                } else if (isSelected) {
+                                  cls = `${styles.quizOption} ${styles.quizOptionSelected}`
+                                }
+                                return (
+                                  <button
+                                    key={oi}
+                                    className={cls}
+                                    onClick={() => handleMultiToggle(oi)}
+                                    disabled={multiSubmitted}
+                                  >
+                                    <span className={styles.optionLabel}>
+                                      {String.fromCharCode(65 + oi)}
+                                    </span>
+                                    <span
+                                      className={`${styles.optionText} ${styles.markdownContent}`}
+                                      dangerouslySetInnerHTML={{ __html: renderInlineMarkdown(opt) }}
+                                    />
+                                    {multiSubmitted && isCorrect && (
+                                      <Check size={16} className={styles.optionIcon} />
+                                    )}
+                                    {multiSubmitted && isSelected && !isCorrect && (
+                                      <X size={16} className={styles.optionIcon} />
+                                    )}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                            {!multiSubmitted && (
+                              <button
+                                className={styles.submitBtn}
+                                onClick={handleMultiSubmit}
+                                disabled={multiSelected.size === 0}
+                              >
+                                提交答案（已选 {multiSelected.size} 项）
+                              </button>
+                            )}
+                            {/* 多选题解析 */}
+                            {multiSubmitted && (
+                              <div
+                                className={`${styles.quizExplanation} ${
+                                  multiSelected.size === q.correctIndices?.length &&
+                                  [...multiSelected].every(i => q.correctIndices?.includes(i))
+                                    ? styles.quizExplanationCorrect
+                                    : styles.quizExplanationWrong
+                                }`}
+                              >
+                                <span className={styles.explanationLabel}>
+                                  {multiSelected.size === q.correctIndices?.length &&
+                                  [...multiSelected].every(i => q.correctIndices?.includes(i))
+                                    ? '回答正确'
+                                    : '回答错误'}
+                                </span>
+                                <span
+                                  className={styles.markdownContent}
+                                  dangerouslySetInnerHTML={{
+                                    __html: renderInlineMarkdown(q.explanation),
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </>
                         )}
 
                         {/* 填空题 */}
@@ -565,6 +720,19 @@ export default function LessonDetailPage() {
                           </div>
                         )}
 
+                        {/* 标准答案（填空/简答题判定后始终显示） */}
+                        {feedback && q.answer && (
+                          <div className={styles.feedback}>
+                            <span className={styles.explanationLabel}>标准答案</span>
+                            <span
+                              className={styles.markdownContent}
+                              dangerouslySetInnerHTML={{
+                                __html: renderInlineMarkdown(q.answer),
+                              }}
+                            />
+                          </div>
+                        )}
+
                         {/* 解析（选择题） */}
                         {qType === 'choice' && revealed && (
                           <div
@@ -595,6 +763,16 @@ export default function LessonDetailPage() {
                                 <button
                                   className={styles.retryBtn}
                                   onClick={handleRetryChoice}
+                                >
+                                  <RefreshCw size={14} strokeWidth={2} />
+                                  <span>再试一次</span>
+                                </button>
+                              )}
+                            {qType === 'multi' &&
+                              multiSubmitted && (
+                                <button
+                                  className={styles.retryBtn}
+                                  onClick={handleRetryMulti}
                                 >
                                   <RefreshCw size={14} strokeWidth={2} />
                                   <span>再试一次</span>

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
-import { CheckCircle, Lock, PlayCircle, Upload, Loader, FileText } from 'lucide-react'
-import { useCurrentBundle } from '@stores/courseStore'
+import { CheckCircle, Lock, PlayCircle, Upload, Loader, FileText, FastForward, Coins } from 'lucide-react'
+import { useCourseStore, useCurrentBundle } from '@stores/courseStore'
 import type { Lesson, Priority } from '@types/index'
 import styles from './LessonPathPage.module.css'
 
@@ -13,6 +13,7 @@ const priorityLabel: Record<Priority, string> = {
 export default function LessonPathPage() {
   const navigate = useNavigate()
   const bundle = useCurrentBundle()
+  const skipLesson = useCourseStore(s => s.skipLesson)
   const course = bundle?.course
   const lessons = bundle?.lessons ?? []
   const progress = bundle?.progress
@@ -117,9 +118,10 @@ export default function LessonPathPage() {
       <header className={styles.header}>
         <div className={styles.headerTop}>
           <h1 className={styles.title}>{course.name}</h1>
-          <div className={styles.xpBadge}>
-            <span className={styles.xpValue}>{progress.totalXP}</span>
-            <span className={styles.xpLabel}>XP</span>
+          <div className={styles.coinsBadge}>
+            <Coins size={16} strokeWidth={2} />
+            <span className={styles.coinsValue}>{progress.chillCoins ?? 0}</span>
+            <span className={styles.coinsLabel}>Chill币</span>
           </div>
         </div>
         <div className={styles.progressRow}>
@@ -156,59 +158,103 @@ export default function LessonPathPage() {
                 {groupLessons.map((lesson, index) => {
                   const prevCompleted =
                     index > 0 && groupLessons[index - 1].status === 'completed'
+                  const isLocked = lesson.status === 'locked'
+
+                  const handleSkip = (e: React.MouseEvent) => {
+                    e.stopPropagation()
+                    const currentCoins = progress?.chillCoins ?? 0
+                    if (currentCoins < lesson.coins) {
+                      alert(`Chill币不足，需要 ${lesson.coins} 枚`)
+                      return
+                    }
+                    try {
+                      skipLesson(lesson.id)
+                    } catch (err) {
+                      alert(err instanceof Error ? err.message : '跳关失败')
+                    }
+                  }
+
+                  const nodeColumn = (
+                    <div className={styles.nodeColumn}>
+                      {index > 0 && (
+                        <div className={styles.connector}>
+                          <div
+                            className={`${styles.connectorLine} ${
+                              prevCompleted ? styles.connectorActive : ''
+                            }`}
+                          />
+                        </div>
+                      )}
+                      <div
+                        className={`${styles.nodeCircle} ${styles[`node_${lesson.status}`]}`}
+                      >
+                        {lesson.status === 'completed' ? (
+                          <CheckCircle size={28} strokeWidth={2.2} />
+                        ) : isLocked ? (
+                          <Lock size={20} strokeWidth={2} />
+                        ) : (
+                          <span className={styles.nodeNumber}>{lesson.order}</span>
+                        )}
+                      </div>
+                    </div>
+                  )
+
+                  const lessonInfo = (
+                    <div
+                      className={`${styles.lessonInfo} ${
+                        isLocked ? styles.lessonInfoLocked : ''
+                      }`}
+                    >
+                      <div className={styles.lessonMeta}>
+                        <span
+                          className={`${styles.priorityTag} ${styles[`priority_${lesson.priority}`]}`}
+                        >
+                          {priorityLabel[lesson.priority]}
+                        </span>
+                        <span className={styles.lessonCoins}>{lesson.coins} Chill币</span>
+                      </div>
+                      <div className={styles.lessonTitle}>{lesson.title}</div>
+                      {lesson.status === 'completed' ? (
+                        <div className={styles.lessonStatusDone}>已完成</div>
+                      ) : isLocked ? (
+                        <div className={styles.lessonStatusLocked}>
+                          <span>未解锁</span>
+                          <button
+                            type="button"
+                            className={styles.skipBtn}
+                            onClick={handleSkip}
+                          >
+                            <FastForward size={12} strokeWidth={2} />
+                            <span>跳关 ({lesson.coins} Chill币)</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <div className={styles.lessonStatusActive}>点击开始</div>
+                      )}
+                    </div>
+                  )
+
+                  if (isLocked) {
+                    return (
+                      <div
+                        key={lesson.id}
+                        className={`${styles.lessonRow} ${styles.row_locked}`}
+                      >
+                        {nodeColumn}
+                        {lessonInfo}
+                      </div>
+                    )
+                  }
+
                   return (
                     <button
                       key={lesson.id}
                       type="button"
-                      className={`${styles.lessonRow} ${
-                        lesson.status === 'locked' ? styles.row_locked : ''
-                      }`}
+                      className={styles.lessonRow}
                       onClick={() => handleLessonClick(lesson)}
                     >
-                      <div className={styles.nodeColumn}>
-                        {index > 0 && (
-                          <div className={styles.connector}>
-                            <div
-                              className={`${styles.connectorLine} ${
-                                prevCompleted ? styles.connectorActive : ''
-                              }`}
-                            />
-                          </div>
-                        )}
-                        <div
-                          className={`${styles.nodeCircle} ${styles[`node_${lesson.status}`]}`}
-                        >
-                          {lesson.status === 'completed' ? (
-                            <CheckCircle size={28} strokeWidth={2.2} />
-                          ) : lesson.status === 'locked' ? (
-                            <Lock size={20} strokeWidth={2} />
-                          ) : (
-                            <span className={styles.nodeNumber}>{lesson.order}</span>
-                          )}
-                        </div>
-                      </div>
-                      <div
-                        className={`${styles.lessonInfo} ${
-                          lesson.status === 'locked' ? styles.lessonInfoLocked : ''
-                        }`}
-                      >
-                        <div className={styles.lessonMeta}>
-                          <span
-                            className={`${styles.priorityTag} ${styles[`priority_${lesson.priority}`]}`}
-                          >
-                            {priorityLabel[lesson.priority]}
-                          </span>
-                          <span className={styles.lessonXP}>{lesson.xp} XP</span>
-                        </div>
-                        <div className={styles.lessonTitle}>{lesson.title}</div>
-                        {lesson.status === 'completed' ? (
-                          <div className={styles.lessonStatusDone}>已完成</div>
-                        ) : lesson.status === 'locked' ? (
-                          <div className={styles.lessonStatusLocked}>未解锁</div>
-                        ) : (
-                          <div className={styles.lessonStatusActive}>点击开始</div>
-                        )}
-                      </div>
+                      {nodeColumn}
+                      {lessonInfo}
                     </button>
                   )
                 })}

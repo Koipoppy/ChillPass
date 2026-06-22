@@ -52,7 +52,7 @@ export interface Lesson {
   examPointId: string
   priority: Priority
   status: LessonStatus
-  xp: number
+  coins: number
   content?: LessonContent
   completedAt?: number
   /** 来源文件名 */
@@ -76,16 +76,18 @@ export interface ExampleItem {
 
 /** 测验题 */
 /** 小测题目类型 */
-export type QuizType = 'choice' | 'fill' | 'short'
+export type QuizType = 'choice' | 'multi' | 'fill' | 'short'
 
 /** 小测题目 */
 export interface QuizQuestion {
   id: string
   type: QuizType
   question: string
-  // 选择题
+  // 单选题
   options?: string[]
   correctIndex?: number
+  // 多选题
+  correctIndices?: number[]
   // 填空/简答题
   answer?: string
   acceptableAnswers?: string[]
@@ -102,10 +104,13 @@ export interface WrongQuestion {
   lessonId: string
   lessonTitle: string
   question: string
-  // 选择题
+  // 单选题
   options?: string[]
   correctIndex?: number
   selectedIndex?: number
+  // 多选题
+  correctIndices?: number[]
+  selectedIndices?: number[]
   // 填空/简答题
   userAnswer?: string
   correctAnswer?: string
@@ -135,9 +140,11 @@ export interface ChatMessage {
 export interface Progress {
   totalLessons: number
   completedLessons: number
-  totalXP: number
+  chillCoins: number
   currentStreak: number
   lastStudyDate?: string
+  /** 累计学习分钟数（用于学习时长 → Chill币 换算） */
+  totalStudyMinutes?: number
 }
 
 /** 课程数据包（一个课程的完整数据） */

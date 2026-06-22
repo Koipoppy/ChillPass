@@ -73,7 +73,7 @@
   color: var(--text-secondary);
 }
 
-.xp {
+.coins {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-tertiary);
@@ -434,7 +434,12 @@
 }
 
 .quizOptionDim {
-  opacity: 0.45;
+  opacity: 0.4;
+}
+
+.quizOptionSelected {
+  border-color: var(--accent-text);
+  background: rgba(0, 113, 227, 0.06);
 }
 
 .optionLabel {

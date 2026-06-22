@@ -99,7 +99,55 @@ export async function* callDeepSeekStream(
 }
 
 /**
+ * 将文本按段落边界分块
+ */
+function chunkText(text: string, chunkSize: number = 8000): string[] {
+  if (text.length <= chunkSize) return [text]
+
+  const chunks: string[] = []
+  let start = 0
+  while (start < text.length) {
+    let end = Math.min(start + chunkSize, text.length)
+    // 在段落边界切分
+    if (end < text.length) {
+      const lastParagraph = text.lastIndexOf('\n\n', end)
+      const lastNewline = text.lastIndexOf('\n', end)
+      const lastPeriod = text.lastIndexOf('。', end)
+      if (lastParagraph > start + chunkSize * 0.5) {
+        end = lastParagraph
+      } else if (lastNewline > start + chunkSize * 0.5) {
+        end = lastNewline
+      } else if (lastPeriod > start + chunkSize * 0.5) {
+        end = lastPeriod + 1
+      }
+    }
+    chunks.push(text.slice(start, end))
+    start = end
+  }
+  return chunks
+}
+
+/**
+ * 标题相似度检查（>60% 相同字符视为重复）
+ */
+function isTitleDuplicate(title1: string, title2: string): boolean {
+  const t1 = title1.replace(/[（）()【】\[\]""''""''：:，,。.!！？?]/g, '').trim()
+  const t2 = title2.replace(/[（）()【】\[\]""''""''：:，,。.!！？?]/g, '').trim()
+  if (t1 === t2) return true
+  // 检查一个是否包含另一个
+  if (t1.length > 3 && t2.length > 3 && (t1.includes(t2) || t2.includes(t1))) return true
+  // 计算字符重叠率
+  const set1 = new Set(t1.split(''))
+  const set2 = new Set(t2.split(''))
+  let common = 0
+  for (const c of set1) if (set2.has(c)) common++
+  const overlapRate = common / Math.min(set1.size, set2.size)
+  return overlapRate > 0.7
+}
+
+/**
  * 从课件文本中提炼考点
+ * 支持大文本分块提取、去重与合并
  * @param sourceFile 来源文件名，用于标注考点来源
  */
 export async function extractExamPoints(
@@ -107,19 +155,60 @@ export async function extractExamPoints(
   courseName: string,
   sourceFile?: string
 ): Promise<ExamPoint[]> {
-  // 根据文本长度动态调整考点数量
-  const textLength = courseText.length
-  let pointRange: string
-  if (textLength < 3000) {
-    pointRange = '3-6 个'
-  } else if (textLength < 8000) {
-    pointRange = '5-10 个'
-  } else if (textLength < 20000) {
-    pointRange = '8-15 个'
-  } else {
-    pointRange = '10-20 个'
+  const chunks = chunkText(courseText, 8000)
+
+  // 如果只有一块，直接提取
+  if (chunks.length === 1) {
+    return extractFromSingleChunk(chunks[0], courseName, sourceFile, '3-20 个')
   }
 
+  // 多块：逐块提取
+  const allPoints: any[] = []
+  for (let i = 0; i < chunks.length; i++) {
+    const points = await extractFromSingleChunk(
+      chunks[i],
+      courseName,
+      sourceFile,
+      '3-8 个',
+      `（第 ${i + 1}/${chunks.length} 部分）`
+    )
+    allPoints.push(...points)
+  }
+
+  // 去重
+  const deduped: any[] = []
+  for (const p of allPoints) {
+    const isDup = deduped.some(existing => isTitleDuplicate(existing.title, p.title))
+    if (!isDup) deduped.push(p)
+  }
+
+  // 如果去重后超过 30 个考点，请求 AI 合并
+  if (deduped.length > 30) {
+    return await consolidatePoints(deduped, courseName, sourceFile)
+  }
+
+  // 分配 ID
+  return deduped.map((p, index) => ({
+    id: `point-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 6)}`,
+    title: p.title,
+    priority: p.priority,
+    description: p.description,
+    keyFormulas: p.keyFormulas || [],
+    pageRefs: p.pageRefs || [],
+    sourceFile: sourceFile,
+  }))
+}
+
+/**
+ * 从单个文本块提取考点
+ */
+async function extractFromSingleChunk(
+  text: string,
+  courseName: string,
+  sourceFile: string | undefined,
+  pointRange: string,
+  chunkLabel?: string
+): Promise<ExamPoint[]> {
   const systemPrompt = `你是一位经验丰富的大学考试辅导专家。你的任务是分析课件内容，提炼出考试考点。
 
 请按以下 JSON 格式返回考点列表，不要包含任何其他文字：
@@ -138,9 +227,9 @@ export async function extractExamPoints(
 - high: 高频，经常出现，需要掌握
 - know: 了解，可能考但不是重点
 
-考点数量控制在 ${pointRange} 之间，根据课件实际内容容量决定。按重要性排序。`
+考点数量控制在 ${pointRange} 之间。按重要性排序。${chunkLabel ? `\n这是课件的${chunkLabel}，请专注于这部分内容中的考点。` : ''}`
 
-  const userPrompt = `课程名称：${courseName}\n${sourceFile ? `来源文件：${sourceFile}\n` : ''}\n课件内容：\n${courseText.slice(0, 12000)}`
+  const userPrompt = `课程名称：${courseName}\n${sourceFile ? `来源文件：${sourceFile}\n` : ''}\n课件内容：\n${text}`
 
   const result = await callDeepSeek(
     [
@@ -151,12 +240,57 @@ export async function extractExamPoints(
   )
 
   try {
-    // 提取 JSON
     const jsonMatch = result.match(/\[[\s\S]*\]/)
     const json = jsonMatch ? jsonMatch[0] : result
-    const points = JSON.parse(json)
+    return JSON.parse(json)
+  } catch {
+    return []
+  }
+}
 
-    return points.map((p: any, index: number) => ({
+/**
+ * 将过多的考点合并整理为 15-25 个核心考点
+ */
+async function consolidatePoints(
+  points: any[],
+  courseName: string,
+  sourceFile?: string
+): Promise<ExamPoint[]> {
+  const pointsSummary = points.map((p, i) =>
+    `${i + 1}. [${p.priority}] ${p.title}: ${p.description}`
+  ).join('\n')
+
+  const systemPrompt = `你是一位经验丰富的大学考试辅导专家。以下是从课件中提取的多个考点，请将它们合并整理为 15-25 个核心考点。
+
+合并规则：
+- 相似考点合并为一个
+- 保留所有重要考点
+- 重新评估优先级
+
+返回 JSON 格式：
+[
+  {
+    "title": "考点名称（简洁，10字以内）",
+    "priority": "must" | "high" | "know",
+    "description": "考点详细描述（50-100字）",
+    "keyFormulas": ["关键公式或概念（可选）"],
+    "pageRefs": ["相关章节或页码引用（可选）"]
+  }
+]`
+
+  const result = await callDeepSeek(
+    [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: `课程名称：${courseName}\n\n待合并考点：\n${pointsSummary}` },
+    ],
+    { temperature: 0.3, maxTokens: 4096 }
+  )
+
+  try {
+    const jsonMatch = result.match(/\[[\s\S]*\]/)
+    const json = jsonMatch ? jsonMatch[0] : result
+    const consolidated = JSON.parse(json)
+    return consolidated.map((p: any, index: number) => ({
       id: `point-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 6)}`,
       title: p.title,
       priority: p.priority,
@@ -166,7 +300,16 @@ export async function extractExamPoints(
       sourceFile: sourceFile,
     }))
   } catch {
-    throw new Error('AI 返回格式解析失败，请重试')
+    // 合并失败，返回前 25 个
+    return points.slice(0, 25).map((p, index) => ({
+      id: `point-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 6)}`,
+      title: p.title,
+      priority: p.priority,
+      description: p.description,
+      keyFormulas: p.keyFormulas || [],
+      pageRefs: p.pageRefs || [],
+      sourceFile: sourceFile,
+    }))
   }
 }
 
@@ -213,7 +356,8 @@ export async function generateLessonContent(
 
 小测题要求：
 - 题目难度递进，从基础到进阶
-- 题目类型混合：选择题（type="choice"，4个选项）、填空题（type="fill"）、简答题（type="short"）
+- 题目类型混合：单选题（type="choice"，4个选项，correctIndex为正确选项索引）、多选题（type="multi"，4-6个选项，correctIndices为正确选项索引数组）、填空题（type="fill"）、简答题（type="short"）
+- 多选题至少有2个正确选项
 - 选择题的干扰项要有迷惑性但明确错误
 - 填空题提供 answer（标准答案）和 acceptableAnswers（可接受的其他答案数组）
 - 简答题提供 answer（参考答案）和 acceptableAnswers（关键词数组，只要答案包含这些关键词即可算正确）
@@ -233,9 +377,16 @@ export async function generateLessonContent(
   "quiz": [
     {
       "type": "choice",
-      "question": "测验题",
+      "question": "单选题",
       "options": ["A", "B", "C", "D"],
       "correctIndex": 0,
+      "explanation": "解析"
+    },
+    {
+      "type": "multi",
+      "question": "多选题",
+      "options": ["A", "B", "C", "D"],
+      "correctIndices": [0, 2],
       "explanation": "解析"
     },
     {
