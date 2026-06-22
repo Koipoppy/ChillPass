@@ -350,3 +350,44 @@
 [data-theme="dark"] .resolveBtn {
   border-color: rgba(255, 255, 255, 0.15);
 }
+
+/* ===== Markdown / KaTeX 公式样式 ===== */
+.markdownContent {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.markdownContent :global(.katex) {
+  font-size: 1.05em;
+}
+
+.markdownContent :global(.katex-display) {
+  margin: 12px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 0;
+}
+
+.markdownContent :global(.katex-display::-webkit-scrollbar) {
+  display: none;
+}
+
+.markdownContent p {
+  margin: 0 0 8px;
+}
+
+.markdownContent p:last-child {
+  margin-bottom: 0;
+}
+
+.markdownContent code {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+}
+
+[data-theme="dark"] .markdownContent code {
+  background: rgba(255, 255, 255, 0.1);
+}

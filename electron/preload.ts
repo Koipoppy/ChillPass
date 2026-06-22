@@ -10,8 +10,6 @@ const api = {
 
   // 读取文件（Buffer，用于 PDF 解析）
   readFileBuffer: (filePath: string) => ipcRenderer.invoke('file:readBuffer', filePath),
-  // 图片 OCR 识别
-  ocrRecognize: (filePath: string) => ipcRenderer.invoke('ocr:recognize', filePath),
 
   // 读取文本文件
   readTextFile: (filePath: string) => ipcRenderer.invoke('file:readText', filePath),

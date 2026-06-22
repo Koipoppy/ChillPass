@@ -73,6 +73,7 @@ export default function AIChatPage() {
   const [input, setInput] = useState('')
   const [attachedImage, setAttachedImage] = useState<string | null>(null)
   const [imageRecognizing, setImageRecognizing] = useState(false)
+  const [ocrProgress, setOcrProgress] = useState('')
   const [recognizedText, setRecognizedText] = useState<string | null>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -124,7 +125,7 @@ export default function AIChatPage() {
   // 选择图片：Electron 环境用文件对话框获取路径，浏览器环境用 input
   const handleImagePick = useCallback(
     async (e?: ReactChangeEvent<HTMLInputElement>) => {
-      let filePath: string | null = null
+      let imageBuffer: ArrayBuffer | null = null
       let file: File | null = null
 
       if (e) {
@@ -133,10 +134,13 @@ export default function AIChatPage() {
         e.target.value = ''
         if (!file) return
       } else if (window.electronAPI?.openImageDialog) {
-        // Electron 环境：用文件对话框获取路径
+        // Electron 环境：用文件对话框获取路径，再读取为 ArrayBuffer
         const result = await window.electronAPI.openImageDialog()
         if (!result || result.length === 0) return
-        filePath = result[0].path
+        const filePath = result[0].path
+        if (window.electronAPI?.readFileBuffer) {
+          imageBuffer = await window.electronAPI.readFileBuffer(filePath)
+        }
       } else {
         return
       }
@@ -146,21 +150,31 @@ export default function AIChatPage() {
         if (file) {
           const dataUrl = await fileToDataURL(file)
           setAttachedImage(dataUrl)
-        } else if (filePath && window.electronAPI?.readFileBuffer) {
-          const buffer = await window.electronAPI.readFileBuffer(filePath)
-          const dataUrl = await fileToDataURL(buffer)
+        } else if (imageBuffer) {
+          const dataUrl = await fileToDataURL(imageBuffer)
           setAttachedImage(dataUrl)
         }
 
         setRecognizedText(null)
         setImageRecognizing(true)
+        setOcrProgress('正在加载识别引擎...')
 
-        // OCR 识别：优先用文件路径（Electron 主进程），否则用 File 对象
-        const text = await recognizeImageText(filePath ?? file!)
+        // OCR 识别：在渲染进程中使用 tesseract.js（CDN 加载资源）
+        const text = await recognizeImageText(imageBuffer ?? file!, (status, progress) => {
+          const statusMap: Record<string, string> = {
+            'loading tesseract core': '加载识别核心...',
+            'initializing tesseract': '初始化引擎...',
+            'loading language traineddata': '加载语言包...',
+            'initializing api': '准备识别...',
+            'recognizing text': `识别中... ${Math.round(progress * 100)}%`,
+          }
+          setOcrProgress(statusMap[status] || status)
+        })
         setRecognizedText(text)
       } catch (err) {
         console.error('图片识别失败', err)
         setRecognizedText(null)
+        alert(err instanceof Error ? err.message : '图片识别失败，请重试')
       } finally {
         setImageRecognizing(false)
       }
@@ -362,7 +376,7 @@ export default function AIChatPage() {
                 {imageRecognizing ? (
                   <div className={styles.imageRecognizing}>
                     <Loader size={14} className={styles.spin} />
-                    <span>识别中...</span>
+                    <span>{ocrProgress || '识别中...'}</span>
                   </div>
                 ) : recognizedText ? (
                   <div className={styles.imagePreviewHint}>

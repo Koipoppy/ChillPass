@@ -58,7 +58,6 @@ export function setupElectronMock() {
     readFileBuffer: async (_filePath: string) => {
       return new ArrayBuffer(0)
     },
-    ocrRecognize: async (_filePath: string) => '',
     readTextFile: async (_filePath: string) => {
       return ''
     },

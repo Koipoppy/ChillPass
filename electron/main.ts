@@ -162,20 +162,6 @@ ipcMain.handle('app:getVersion', () => {
   return app.getVersion()
 })
 
-// ===== 图片 OCR 识别 =====
-ipcMain.handle('ocr:recognize', async (_event, filePath: string) => {
-  try {
-    // 动态导入 tesseract.js，避免在浏览器环境中加载
-    const Tesseract = await import('tesseract.js')
-    const result = await Tesseract.recognize(filePath, 'chi_sim+eng', {
-      logger: () => {},
-    })
-    return result.data.text.trim()
-  } catch (err) {
-    throw new Error(`图片识别失败: ${err instanceof Error ? err.message : '未知错误'}`)
-  }
-})
-
 // ===== 应用信息 =====
 
 ipcMain.handle('app:getPaths', () => {

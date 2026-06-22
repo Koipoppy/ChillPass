@@ -75,12 +75,23 @@ export interface ExampleItem {
 }
 
 /** 测验题 */
+/** 小测题目类型 */
+export type QuizType = 'choice' | 'fill' | 'short'
+
+/** 小测题目 */
 export interface QuizQuestion {
   id: string
+  type: QuizType
   question: string
-  options: string[]
-  correctIndex: number
+  // 选择题
+  options?: string[]
+  correctIndex?: number
+  // 填空/简答题
+  answer?: string
+  acceptableAnswers?: string[]
   explanation: string
+  /** 考点标题（用于重新生成题目） */
+  examPointTitle?: string
 }
 
 /** 错题记录 */
@@ -91,9 +102,15 @@ export interface WrongQuestion {
   lessonId: string
   lessonTitle: string
   question: string
-  options: string[]
-  correctIndex: number
-  selectedIndex: number
+  // 选择题
+  options?: string[]
+  correctIndex?: number
+  selectedIndex?: number
+  // 填空/简答题
+  userAnswer?: string
+  correctAnswer?: string
+  // 通用
+  quizType: QuizType
   explanation: string
   /** 考点标题 */
   examPointTitle: string
@@ -193,7 +210,6 @@ export interface ElectronAPI {
   openImageDialog: () => Promise<FileInfo[] | null>
   openDirectoryDialog: () => Promise<string | null>
   readFileBuffer: (filePath: string) => Promise<ArrayBuffer>
-  ocrRecognize: (filePath: string) => Promise<string>
   readTextFile: (filePath: string) => Promise<string>
   getUserDataPath: () => Promise<string>
   windowMinimize: () => void

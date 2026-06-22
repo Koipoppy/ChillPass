@@ -1,4 +1,4 @@
-import type { ExamPoint, LessonContent } from '@types/index'
+import type { ExamPoint, LessonContent, QuizQuestion } from '@types/index'
 import { useSettingsStore } from '@stores/settingsStore'
 
 const API_URL = 'https://api.deepseek.com/chat/completions'
@@ -205,11 +205,18 @@ export async function generateLessonContent(
 1. 核心知识点（3-5 个要点）
 2. 详细解释（通俗易懂，200-400字）
 3. 例题（${exampleCount} 道，含详细步骤）
-4. 小测题（${quizCount.min}-${quizCount.max} 道，每题 4 个选项，含解析）
+4. 小测题（${quizCount.min}-${quizCount.max} 道，含解析）
+
+重要格式要求：
+- 数学公式必须使用 LaTeX 语法，行内公式用 $...$ 包裹，块级公式用 $$...$$ 包裹
+- 例如：$E=mc^2$、$\\\\frac{a}{b}$、$$\\\\int_0^1 x^2 dx$$
 
 小测题要求：
 - 题目难度递进，从基础到进阶
-- 干扰项要有迷惑性但明确错误
+- 题目类型混合：选择题（type="choice"，4个选项）、填空题（type="fill"）、简答题（type="short"）
+- 选择题的干扰项要有迷惑性但明确错误
+- 填空题提供 answer（标准答案）和 acceptableAnswers（可接受的其他答案数组）
+- 简答题提供 answer（参考答案）和 acceptableAnswers（关键词数组，只要答案包含这些关键词即可算正确）
 - 每题解析要说明为什么对、为什么错
 
 返回 JSON 格式：
@@ -225,9 +232,24 @@ export async function generateLessonContent(
   ],
   "quiz": [
     {
+      "type": "choice",
       "question": "测验题",
       "options": ["A", "B", "C", "D"],
       "correctIndex": 0,
+      "explanation": "解析"
+    },
+    {
+      "type": "fill",
+      "question": "填空题：____是...",
+      "answer": "标准答案",
+      "acceptableAnswers": ["其他可接受答案1", "其他可接受答案2"],
+      "explanation": "解析"
+    },
+    {
+      "type": "short",
+      "question": "简答题：请简述...",
+      "answer": "参考答案",
+      "acceptableAnswers": ["关键词1", "关键词2"],
       "explanation": "解析"
     }
   ]
@@ -256,12 +278,148 @@ ${courseText.slice(0, 6000)}`
     if (parsed.quiz && Array.isArray(parsed.quiz)) {
       parsed.quiz = parsed.quiz.map((q: any, i: number) => ({
         ...q,
+        type: q.type || 'choice', // 默认为选择题（兼容旧数据）
         id: `quiz-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 8)}`,
+        examPointTitle: examPoint.title,
       }))
     }
     return parsed
   } catch {
     throw new Error('关卡内容生成失败，请重试')
+  }
+}
+
+/**
+ * AI 评阅填空/简答题
+ * @param question 题目
+ * @param userAnswer 用户答案
+ * @param correctAnswer 标准答案
+ * @param acceptableAnswers 可接受的关键词/答案
+ * @returns { correct: boolean, feedback: string }
+ */
+export async function gradeAnswer(
+  question: string,
+  userAnswer: string,
+  correctAnswer: string,
+  acceptableAnswers: string[] = []
+): Promise<{ correct: boolean; feedback: string }> {
+  // 先做本地快速判断：完全匹配或包含关键词
+  const normalizedUser = userAnswer.trim().toLowerCase()
+  const normalizedCorrect = correctAnswer.trim().toLowerCase()
+
+  if (normalizedUser === normalizedCorrect) {
+    return { correct: true, feedback: '回答完全正确！' }
+  }
+
+  // 检查是否包含所有关键词
+  if (acceptableAnswers.length > 0) {
+    const allKeywordsPresent = acceptableAnswers.every(
+      kw => normalizedUser.includes(kw.trim().toLowerCase())
+    )
+    if (allKeywordsPresent) {
+      return { correct: true, feedback: '回答正确，包含了所有关键点！' }
+    }
+    // 检查是否包含部分关键词（至少50%）
+    const matchedCount = acceptableAnswers.filter(
+      kw => normalizedUser.includes(kw.trim().toLowerCase())
+    ).length
+    if (matchedCount >= Math.ceil(acceptableAnswers.length * 0.5)) {
+      return {
+        correct: false,
+        feedback: `部分正确（命中 ${matchedCount}/${acceptableAnswers.length} 个关键点），但还不够完整。参考答案：${correctAnswer}`,
+      }
+    }
+  }
+
+  // 本地无法确定时，调用 AI 评阅
+  try {
+    const systemPrompt = `你是一位严格的阅卷老师。请判断学生的答案是否正确。
+
+题目：${question}
+标准答案：${correctAnswer}
+可接受的关键词：${acceptableAnswers.join('、')}
+学生答案：${userAnswer}
+
+请返回 JSON 格式：
+{
+  "correct": true/false,
+  "feedback": "评语（简短，说明对错原因）"
+}
+
+判断标准：
+- 答案意思正确即可，不要求字面完全一致
+- 关键概念/公式必须正确
+- 计算结果必须正确
+- 如果答案有明显错误，correct 为 false`
+
+    const result = await callDeepSeek(
+      [{ role: 'system', content: systemPrompt }],
+      { temperature: 0.1, maxTokens: 512 }
+    )
+
+    const jsonMatch = result.match(/\{[\s\S]*\}/)
+    const json = jsonMatch ? jsonMatch[0] : result
+    const parsed = JSON.parse(json)
+    return {
+      correct: !!parsed.correct,
+      feedback: parsed.feedback || (parsed.correct ? '回答正确！' : '回答不正确'),
+    }
+  } catch {
+    // AI 评阅失败时，保守判断为错误
+    return {
+      correct: false,
+      feedback: `无法自动评阅，参考答案：${correctAnswer}`,
+    }
+  }
+}
+
+/**
+ * 重新生成一道考察相同知识点的小测题
+ */
+export async function regenerateQuizQuestion(
+  examPointTitle: string,
+  previousQuestion: string,
+  courseText: string
+): Promise<QuizQuestion> {
+  const systemPrompt = `你是一位大学考试辅导老师。请生成一道新的小测题，考察与以下题目相同的知识点。
+
+之前的题目：${previousQuestion}
+考点：${examPointTitle}
+
+要求：
+- 新题目必须考察相同的知识点，但题目内容和表述不同
+- 数学公式使用 LaTeX 语法（$...$ 或 $$...$$）
+- 返回 JSON 格式，包含 type、question、options/correctIndex（选择题）或 answer/acceptableAnswers（填空/简答题）、explanation
+
+返回 JSON：
+{
+  "type": "choice",
+  "question": "新题目",
+  "options": ["A", "B", "C", "D"],
+  "correctIndex": 0,
+  "explanation": "解析"
+}`
+
+  const result = await callDeepSeek(
+    [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: `课件相关内容：\n${courseText.slice(0, 3000)}` },
+    ],
+    { temperature: 0.7, maxTokens: 2048 }
+  )
+
+  try {
+    const jsonMatch = result.match(/\{[\s\S]*\}/)
+    const json = jsonMatch ? jsonMatch[0] : result
+    const parsed = JSON.parse(json)
+    return {
+      ...parsed,
+      type: parsed.type || 'choice',
+      id: `quiz-regen-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      examPointTitle,
+    }
+  } catch {
+    throw new Error('题目重新生成失败，请重试')
   }
 }
 

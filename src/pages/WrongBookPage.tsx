@@ -12,6 +12,7 @@ import {
 import { useWrongQuestionStore } from '@stores/wrongQuestionStore'
 import { useCourseStore } from '@stores/courseStore'
 import type { Priority, WrongQuestion } from '@types/index'
+import { renderMarkdown, renderInlineMarkdown } from '../utils/markdown'
 import styles from './WrongBookPage.module.css'
 
 const priorityLabel: Record<Priority, string> = {
@@ -84,7 +85,16 @@ export default function WrongBookPage() {
   }
 
   const handleAsk = (q: WrongQuestion) => {
-    const prefill = `我在「${q.lessonTitle}」这关遇到了一道错题：\n题目：${q.question}\n我选了：${q.options[q.selectedIndex]}\n正确答案：${q.options[q.correctIndex]}\n请帮我理解这个知识点。`
+    let prefill: string
+    if (q.quizType === 'choice' && q.options && q.correctIndex !== undefined) {
+      const myAnswer = q.selectedIndex !== undefined ? q.options[q.selectedIndex] : '未作答'
+      const correctAnswer = q.options[q.correctIndex]
+      prefill = `我在「${q.lessonTitle}」这关遇到了一道错题：\n题目：${q.question}\n我选了：${myAnswer}\n正确答案：${correctAnswer}\n请帮我理解这个知识点。`
+    } else {
+      const myAnswer = q.userAnswer ?? '未作答'
+      const correctAnswer = q.correctAnswer ?? '未知'
+      prefill = `我在「${q.lessonTitle}」这关遇到了一道错题：\n题目：${q.question}\n我的答案：${myAnswer}\n参考答案：${correctAnswer}\n请帮我理解这个知识点。`
+    }
     navigate('/chat', { state: { prefill } })
   }
 
@@ -183,26 +193,46 @@ export default function WrongBookPage() {
                   </div>
 
                   {/* 题目 */}
-                  <p className={styles.questionText}>{q.question}</p>
+                  <div
+                    className={`${styles.questionText} ${styles.markdownContent}`}
+                    dangerouslySetInnerHTML={{ __html: renderMarkdown(q.question) }}
+                  />
 
                   {/* 答案对比 */}
                   <div className={styles.answers}>
                     <div className={`${styles.answerRow} ${styles.answerWrong}`}>
                       <span className={styles.answerLabel}>你的答案</span>
-                      <span className={styles.answerValue}>
-                        {q.options[q.selectedIndex] ?? '—'}
-                      </span>
+                      <span
+                        className={styles.answerValue}
+                        dangerouslySetInnerHTML={{
+                          __html: renderInlineMarkdown(
+                            q.quizType === 'choice'
+                              ? (q.options && q.selectedIndex !== undefined ? q.options[q.selectedIndex] : '—')
+                              : (q.userAnswer ?? '—')
+                          ),
+                        }}
+                      />
                     </div>
                     <div className={`${styles.answerRow} ${styles.answerCorrect}`}>
                       <span className={styles.answerLabel}>正确答案</span>
-                      <span className={styles.answerValue}>
-                        {q.options[q.correctIndex] ?? '—'}
-                      </span>
+                      <span
+                        className={styles.answerValue}
+                        dangerouslySetInnerHTML={{
+                          __html: renderInlineMarkdown(
+                            q.quizType === 'choice'
+                              ? (q.options && q.correctIndex !== undefined ? q.options[q.correctIndex] : '—')
+                              : (q.correctAnswer ?? '—')
+                          ),
+                        }}
+                      />
                     </div>
                   </div>
 
                   {/* 解析 */}
-                  <div className={styles.explanation}>{q.explanation}</div>
+                  <div
+                    className={`${styles.explanation} ${styles.markdownContent}`}
+                    dangerouslySetInnerHTML={{ __html: renderMarkdown(q.explanation) }}
+                  />
 
                   {/* 操作按钮 */}
                   <div className={styles.cardActions}>

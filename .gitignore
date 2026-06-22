@@ -34,3 +34,6 @@ npm-debug.log*
 NUL.css
 vite.config.d.ts
 vite.config.js
+
+# 设计规范（内部文档，不公开）
+设计规范.md
