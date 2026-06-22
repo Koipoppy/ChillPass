@@ -228,17 +228,34 @@ function fetchJson(url: string): Promise<any> {
       let data = ''
       res.on('data', (chunk) => { data += chunk })
       res.on('end', () => {
+        // 检查 HTTP 状态码
+        if (res.statusCode && res.statusCode !== 200) {
+          let errorMsg = `GitHub API 返回 ${res.statusCode}`
+          if (res.statusCode === 403) {
+            errorMsg = 'GitHub API 速率限制（每小时 60 次），请稍后再试'
+          } else if (res.statusCode === 404) {
+            errorMsg = '未找到任何发布版本，请确认仓库已创建 Release'
+          }
+          reject(new Error(errorMsg))
+          return
+        }
         try {
-          resolve(JSON.parse(data))
+          const parsed = JSON.parse(data)
+          // 检查是否是错误响应（如速率限制返回的 JSON）
+          if (parsed.message && !parsed.tag_name) {
+            reject(new Error(`GitHub API 错误: ${parsed.message}`))
+            return
+          }
+          resolve(parsed)
         } catch {
           reject(new Error('无法解析更新信息'))
         }
       })
     })
     req.on('error', reject)
-    req.setTimeout(10000, () => {
+    req.setTimeout(15000, () => {
       req.destroy()
-      reject(new Error('更新检查超时'))
+      reject(new Error('更新检查超时（15秒），请检查网络连接'))
     })
     req.end()
   })
@@ -250,14 +267,24 @@ ipcMain.handle('update:check', async () => {
     const release = await fetchJson(UPDATE_CHECK_URL)
 
     // GitHub Releases API 返回格式
-    const latestVersion = release.tag_name || '0.0.0'
+    // 优先从 tag_name 提取版本号，回退到 release.name
+    let latestVersion = release.tag_name || ''
+    if (!latestVersion && release.name) {
+      latestVersion = release.name
+    }
+
     // 优先使用 exe 安装器的直接下载链接，其次使用 Release 页面
-    const exeAsset = release.assets?.find((a: any) => a.name.endsWith('.exe') && !a.name.endsWith('.blockmap'))
+    const exeAsset = release.assets?.find((a: any) =>
+      a.name.endsWith('.exe') && !a.name.endsWith('.blockmap')
+    )
     const downloadUrl = exeAsset?.browser_download_url || release.html_url || ''
     const releaseNotes = release.body || '暂无更新说明'
     const releaseDate = release.published_at || new Date().toISOString()
 
-    if (compareVersions(latestVersion, currentVersion) > 0) {
+    const latestVer = extractSemver(latestVersion || '0.0.0')
+    const currentVer = extractSemver(currentVersion)
+
+    if (compareVersions(latestVer, currentVer) > 0) {
       return {
         version: latestVersion,
         releaseNotes,
