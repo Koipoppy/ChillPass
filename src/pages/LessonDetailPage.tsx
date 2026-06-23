@@ -29,6 +29,12 @@ const priorityLabel: Record<Priority, string> = {
   know: '了解',
 }
 
+/** 去除选项文本中已有的 A. B. C. D. 前缀，避免重复 */
+function cleanOptionText(opt: string): string {
+  if (!opt) return ''
+  return opt.replace(/^[A-Z][.、．)]\s*/i, '').trim()
+}
+
 /** 打乱选择题选项顺序，返回新 correctIndex/correctIndices */
 function shuffleOptions(q: QuizQuestion): QuizQuestion {
   if (!q.options) return q
@@ -567,7 +573,7 @@ export default function LessonDetailPage() {
                                   </span>
                                   <span
                                     className={`${styles.optionText} ${styles.markdownContent}`}
-                                    dangerouslySetInnerHTML={{ __html: renderInlineMarkdown(opt) }}
+                                    dangerouslySetInnerHTML={{ __html: renderInlineMarkdown(cleanOptionText(opt)) }}
                                   />
                                   {revealed && isCorrect && (
                                     <Check size={16} className={styles.optionIcon} />
@@ -612,7 +618,7 @@ export default function LessonDetailPage() {
                                     </span>
                                     <span
                                       className={`${styles.optionText} ${styles.markdownContent}`}
-                                      dangerouslySetInnerHTML={{ __html: renderInlineMarkdown(opt) }}
+                                      dangerouslySetInnerHTML={{ __html: renderInlineMarkdown(cleanOptionText(opt)) }}
                                     />
                                     {multiSubmitted && isCorrect && (
                                       <Check size={16} className={styles.optionIcon} />

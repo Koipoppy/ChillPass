@@ -9,7 +9,7 @@ import { generateAllLessonsInBackground } from '@services/lessonGenerator'
 import type { CourseFile, CourseStatus } from '@types/index'
 import styles from './UploadPage.module.css'
 
-type Phase = 'idle' | 'parsing' | 'extracting'
+type Phase = 'idle' | 'parsing' | 'extracting' | 'done'
 type ImportMode = 'create' | 'append'
 
 /** 课程状态中文标签 */
@@ -216,8 +216,11 @@ export default function UploadPage() {
         generateAllLessonsInBackground(courseId)
       }
 
-      // 跳转到闯关路径
-      navigate('/lessons')
+      // 显示完成状态后跳转到首页
+      setPhase('done')
+      setProgressText('导入完成！正在跳转...')
+      setProgress(100)
+      setTimeout(() => navigate('/'), 1200)
     } catch (err) {
       setError(err instanceof Error ? err.message : '解析失败，请重试')
       setPhase('idle')
@@ -317,8 +320,11 @@ export default function UploadPage() {
       // 5. 后台生成关卡内容（已有内容的关卡会自动跳过）
       generateAllLessonsInBackground(selectedCourseId)
 
-      // 6. 跳转到闯关路径
-      navigate('/lessons')
+      // 6. 显示完成状态后跳转到首页
+      setPhase('done')
+      setProgressText('增量导入完成！正在跳转...')
+      setProgress(100)
+      setTimeout(() => navigate('/'), 1200)
     } catch (err) {
       setError(err instanceof Error ? err.message : '解析失败，请重试')
       setPhase('idle')
@@ -494,17 +500,63 @@ export default function UploadPage() {
           </div>
         )}
 
-        {/* 解析进度 */}
+        {/* 解析进度 — 增强版步骤指示器 */}
         {isBusy && (
           <div className={styles.progress}>
+            {/* 步骤指示器 */}
+            <div className={styles.stepIndicator}>
+              {([
+                { key: 'parsing', label: '解析课件', icon: '📄' },
+                { key: 'extracting', label: '提炼考点', icon: '🧠' },
+                { key: 'done', label: '生成路径', icon: '✨' },
+              ] as { key: Phase; label: string; icon: string }[]).map((step, i) => {
+                const stepOrder: Record<string, number> = { parsing: 1, extracting: 2, done: 3 }
+                const currentOrder = stepOrder[phase] ?? 0
+                const stepOrderVal = stepOrder[step.key] ?? 0
+                const isStepDone = stepOrderVal < currentOrder
+                const isStepActive = stepOrderVal === currentOrder
+
+                return (
+                  <div key={step.key} className={styles.stepItem}>
+                    <div
+                      className={`${styles.stepCircle} ${
+                        isStepDone ? styles.stepCircleDone : ''
+                      } ${isStepActive ? styles.stepCircleActive : ''}`}
+                    >
+                      {isStepDone ? '✓' : step.icon}
+                    </div>
+                    <span
+                      className={`${styles.stepLabel} ${
+                        isStepActive ? styles.stepLabelActive : ''
+                      } ${isStepDone ? styles.stepLabelDone : ''}`}
+                    >
+                      {step.label}
+                    </span>
+                    {i < 2 && (
+                      <div
+                        className={`${styles.stepConnector} ${
+                          isStepDone ? styles.stepConnectorDone : ''
+                        }`}
+                      />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* 当前状态文本 */}
             <div className={styles.progressHeader}>
               <Loader size={18} className={styles.spinnerIcon} />
               <span>{progressText}</span>
             </div>
+
+            {/* 进度条 */}
             <div className={styles.progressBar}>
               <div
                 className={styles.progressFill}
-                style={{ width: phase === 'extracting' ? '100%' : `${progress}%` }}
+                style={{
+                  width: phase === 'extracting' ? '100%' : phase === 'done' ? '100%' : `${progress}%`,
+                }}
               />
             </div>
           </div>

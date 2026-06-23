@@ -219,10 +219,87 @@
 .progress {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 16px;
+  gap: 14px;
+  padding: 20px;
   background: rgba(255, 255, 255, 0.5);
   border-radius: var(--radius-md);
+}
+
+/* 步骤指示器 */
+.stepIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 4px 0 8px;
+}
+
+.stepItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stepCircle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 16px;
+  background: rgba(0, 0, 0, 0.05);
+  border: 2px solid rgba(0, 0, 0, 0.08);
+  transition: all 0.4s ease;
+}
+
+.stepCircleActive {
+  border-color: var(--accent-text);
+  background: rgba(0, 113, 227, 0.1);
+  animation: stepPulse 1.5s ease-in-out infinite;
+}
+
+.stepCircleDone {
+  border-color: var(--success-text);
+  background: rgba(52, 199, 89, 0.12);
+  color: var(--success-text);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+@keyframes stepPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 113, 227, 0.3); }
+  50% { transform: scale(1.08); box-shadow: 0 0 0 6px rgba(0, 113, 227, 0); }
+}
+
+.stepLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.stepLabelActive {
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.stepLabelDone {
+  color: var(--success-text);
+}
+
+.stepConnector {
+  width: 32px;
+  height: 2px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 1px;
+  margin: 0 4px;
+  transition: background 0.4s ease;
+}
+
+.stepConnectorDone {
+  background: var(--success-text);
 }
 
 .progressHeader {

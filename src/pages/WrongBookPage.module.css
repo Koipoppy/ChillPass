@@ -162,7 +162,7 @@
   gap: 12px;
   margin-top: 12px;
   overflow: hidden;
-  max-height: 5000px;
+  max-height: 10000px;
   transition: max-height 0.3s ease, margin-top 0.3s ease, opacity 0.3s ease;
   opacity: 1;
 }
@@ -175,11 +175,13 @@
 
 /* ===== 错题卡片 ===== */
 .questionCard {
-  padding: 20px 24px;
+  padding: 20px 24px 28px;
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
   gap: 12px;
+  /* 强制覆盖 .liquid-glass 的 overflow: hidden，防止按钮被裁剪 */
+  overflow: visible !important;
 }
 
 .cardHeader {
@@ -227,6 +229,10 @@
   font-weight: 500;
   line-height: 1.5;
   color: var(--text-primary);
+  /* 限制题目高度，超长内容内部滚动，按钮始终可见 */
+  max-height: 250px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 /* ===== 答案对比 ===== */
@@ -288,10 +294,35 @@
   padding: 12px 14px;
   background: rgba(0, 0, 0, 0.03);
   border-radius: var(--radius-md);
+  /* 限制解析高度，超长内容内部滚动 */
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 [data-theme="dark"] .explanation {
   background: rgba(255, 255, 255, 0.05);
+}
+
+/* 题目和解析区域的滚动条样式 */
+.questionText::-webkit-scrollbar,
+.explanation::-webkit-scrollbar {
+  width: 4px;
+}
+
+.questionText::-webkit-scrollbar-track,
+.explanation::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.questionText::-webkit-scrollbar-thumb,
+.explanation::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 2px;
+}
+
+[data-theme="dark"] .questionText::-webkit-scrollbar-thumb,
+[data-theme="dark"] .explanation::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 /* ===== 操作按钮 ===== */
@@ -299,6 +330,8 @@
   display: flex;
   gap: 10px;
   justify-content: flex-end;
+  flex-shrink: 0;
+  padding-top: 4px;
 }
 
 .askBtn {
@@ -311,19 +344,14 @@
   padding: 8px 18px;
   border-radius: var(--radius-pill);
   border: none;
-  background: #1d1d1f;
-  color: #ffffff;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
   cursor: pointer;
   transition: opacity 0.2s ease;
 }
 
 .askBtn:hover {
   opacity: 0.85;
-}
-
-[data-theme="dark"] .askBtn {
-  background: #f5f5f7;
-  color: #1d1d1f;
 }
 
 .resolveBtn {
@@ -335,7 +363,7 @@
   font-family: inherit;
   padding: 8px 18px;
   border-radius: var(--radius-pill);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
@@ -345,10 +373,6 @@
 .resolveBtn:hover {
   border-color: var(--success-text);
   color: var(--success-text);
-}
-
-[data-theme="dark"] .resolveBtn {
-  border-color: rgba(255, 255, 255, 0.15);
 }
 
 /* ===== Markdown / KaTeX 公式样式 ===== */

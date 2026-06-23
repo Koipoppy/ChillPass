@@ -444,7 +444,8 @@ export default function TeacherWorkspace() {
         courseName,
         questionType,
         count,
-        difficulty
+        difficulty,
+        questions, // 传入已有题目，让 AI 避免重复
       )
       if (newQuestions.length === 0) {
         setError('生成失败，请重试（可能是网络问题或课件内容不足）')
@@ -632,18 +633,35 @@ export default function TeacherWorkspace() {
 
         <div className={styles.fieldGroup}>
           <label className={styles.fieldLabel}>数量</label>
-          <div className={styles.optionRow}>
-            {[5, 10, 15, 20].map(n => (
-              <button
-                key={n}
-                className={`${styles.optionBtn} ${
-                  count === n ? styles.optionBtnActive : ''
-                }`}
-                onClick={() => setCount(n)}
-              >
-                {n} 题
-              </button>
-            ))}
+          <div className={styles.countRow}>
+            <button
+              type="button"
+              className={styles.countBtn}
+              onClick={() => setCount(Math.max(1, count - 1))}
+              disabled={count <= 1}
+            >
+              −
+            </button>
+            <input
+              type="number"
+              className={styles.countInput}
+              min={1}
+              max={50}
+              value={count}
+              onChange={e => {
+                const v = Number(e.target.value)
+                if (Number.isFinite(v) && v >= 1 && v <= 50) setCount(v)
+              }}
+            />
+            <button
+              type="button"
+              className={styles.countBtn}
+              onClick={() => setCount(Math.min(50, count + 1))}
+              disabled={count >= 50}
+            >
+              +
+            </button>
+            <span className={styles.countHint}>题（1-50）</span>
           </div>
         </div>
 

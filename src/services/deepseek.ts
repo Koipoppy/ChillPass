@@ -394,6 +394,7 @@ export async function generateLessonContent(
 - 题目类型混合：单选题（type="choice"，4个选项，correctIndex为正确选项索引）、多选题（type="multi"，4-6个选项，correctIndices为正确选项索引数组）、填空题（type="fill"）、简答题（type="short"）
 - 多选题至少有2个正确选项
 - 选择题的干扰项要有迷惑性但明确错误
+- 选择题的options数组只写选项内容本身，不要包含A. B. C. D.等前缀
 - 填空题提供 answer（标准答案）和 acceptableAnswers（可接受的其他答案数组）
 - 简答题提供 answer（参考答案）和 acceptableAnswers（关键词数组，只要答案包含这些关键词即可算正确）
 - 每题解析要说明为什么对、为什么错
@@ -413,14 +414,14 @@ export async function generateLessonContent(
     {
       "type": "choice",
       "question": "单选题",
-      "options": ["A", "B", "C", "D"],
+      "options": ["选项内容A", "选项内容B", "选项内容C", "选项内容D"],
       "correctIndex": 0,
       "explanation": "解析"
     },
     {
       "type": "multi",
       "question": "多选题",
-      "options": ["A", "B", "C", "D"],
+      "options": ["选项内容A", "选项内容B", "选项内容C", "选项内容D"],
       "correctIndices": [0, 2],
       "explanation": "解析"
     },
@@ -575,13 +576,14 @@ export async function regenerateQuizQuestion(
 要求：
 - 新题目必须考察相同的知识点，但题目内容和表述不同
 - 数学公式使用 LaTeX 语法（$...$ 或 $$...$$）
+- 选择题的options数组只写选项内容本身，不要包含A. B. C. D.等前缀
 - 返回 JSON 格式，包含 type、question、options/correctIndex（选择题）或 answer/acceptableAnswers（填空/简答题）、explanation
 
 返回 JSON：
 {
   "type": "choice",
   "question": "新题目",
-  "options": ["A", "B", "C", "D"],
+  "options": ["选项内容A", "选项内容B", "选项内容C", "选项内容D"],
   "correctIndex": 0,
   "explanation": "解析"
 }`
@@ -767,7 +769,14 @@ export async function* chatWithTutor(
 }
 
 /**
- * 生成试题（教师工作台）
+ * 生成试题（教师工作台）— 智能组卷模式
+ *
+ * AI 像老练的出卷老师一样：
+ * 1. 分析课件内容，识别考点
+ * 2. 判别每个考点适合什么题型
+ * 3. 同类题目覆盖不同考点
+ * 4. 选择题中混合概念题和计算题
+ * 5. 考虑已有题目，避免重复
  */
 export async function generateExamQuestions(
   courseText: string,
@@ -775,6 +784,7 @@ export async function generateExamQuestions(
   questionType: 'choice' | 'multi' | 'fill' | 'short' | 'essay' | 'calculation',
   count: number,
   difficulty: 'easy' | 'medium' | 'hard',
+  existingQuestions: ExamQuestion[] = [],
 ): Promise<ExamQuestion[]> {
   const typeNames = {
     choice: '单选题',
@@ -795,26 +805,61 @@ export async function generateExamQuestions(
     fill: 5,
   }
 
-  // 根据题型和数量动态调整 maxTokens
-  const maxTokens = Math.min(8192, 1024 * count + 2048)
+  const maxTokens = Math.min(8192, 1024 * count + 3072)
+
+  // 构建已有题目的摘要（供 AI 参考，避免重复）
+  const existingSummary = existingQuestions.length > 0
+    ? existingQuestions.map((q, i) => `${i + 1}. [${typeNames[q.type] || q.type}] ${q.question.slice(0, 80)}`).join('\n')
+    : '（暂无已有题目）'
 
   const typeSpecificRules: Record<string, string> = {
-    choice: '- 单选题：4个选项，1个正确答案\n- 选项内容不要包含A. B. C. D.等前缀，只写选项内容本身',
-    multi: '- 多选题：4-6个选项，至少2个正确答案\n- 选项内容不要包含A. B. C. D.等前缀，只写选项内容本身',
-    fill: '- 填空题：提供标准答案和可接受答案\n- 不要提供options字段',
-    short: '- 简答题：提供参考答案和关键词\n- 不要提供options字段',
-    essay: '- 论述题：提供参考答案要点和关键词\n- 不要提供options字段',
-    calculation: '- 计算题：提供完整解题步骤（steps数组，每步一个字符串）、最终答案和解析\n- 计算题不要提供options字段\n- 计算题不需要选项',
+    choice: `- 单选题：4个选项，1个正确答案
+- 选项内容不要包含A. B. C. D.等前缀，只写选项内容本身
+- 选择题不要全是概念考察，至少有30%的题目需要通过计算或推导才能得出答案
+- 计算型选择题：给出具体数据或公式，要求计算结果，选项为不同的数值或表达式`,
+    multi: `- 多选题：4-6个选项，至少2个正确答案
+- 选项内容不要包含A. B. C. D.等前缀，只写选项内容本身
+- 多选题应考察综合理解，选项之间要有逻辑关联`,
+    fill: `- 填空题：提供标准答案和可接受答案
+- 不要提供options字段
+- 填空题可以考察公式、术语、数值等`,
+    short: `- 简答题：提供参考答案和关键词
+- 不要提供options字段
+- 简答题要求答案精炼，3-5个要点`,
+    essay: `- 论述题：提供参考答案要点和关键词
+- 不要提供options字段
+- 论述题要求结构化作答，有论点论据`,
+    calculation: `- 计算题：提供完整解题步骤（steps数组，每步一个字符串）、最终答案和解析
+- 计算题不要提供options字段
+- 计算题需要有明确的已知条件和求解目标`,
   }
 
-  const systemPrompt = `你是一位大学教师，正在出考试题。请根据课件内容生成 ${count} 道${typeNames[questionType]}，难度为${difficultyText[difficulty]}。
+  const systemPrompt = `你是一位经验丰富的大学教师，正在为${courseName}课程出考试题。
 
-要求：
+你的任务：生成 ${count} 道${typeNames[questionType]}，难度为${difficultyText[difficulty]}。
+
+## 出题原则（像老练的出卷老师一样思考）
+
+1. **考点分析**：先仔细阅读课件内容，识别出最重要的考点
+2. **题型匹配**：判别每个考点适合什么类型的题目
+   - 概念性强的考点 → 选择题、填空题
+   - 需要推导计算的考点 → 计算题、计算型选择题
+   - 需要综合理解的考点 → 多选题、简答题
+   - 需要论述分析的考点 → 论述题、简答题
+3. **考点覆盖**：同一类型的题目尽量覆盖不同的考点，不要在同一个考点上出多道题
+4. **难度梯度**：即使是同一难度等级，也要有梯度变化，从基础到进阶
+5. **避免重复**：参考已有题目，不要出相同或高度相似的题目
+6. **计算与概念混合**：选择题中不要全是概念题，至少30%需要通过计算或推导才能得出答案
+
+## 已有题目（避免重复）
+${existingSummary}
+
+## 格式要求
 - 题目必须基于课件内容，不能编造
 - 数学公式使用 LaTeX 语法（$...$ 或 $$...$$）
 ${typeSpecificRules[questionType]}
 
-返回 JSON 数组：
+## 返回 JSON 数组：
 [
   {
     "type": "${questionType}",
@@ -826,7 +871,8 @@ ${typeSpecificRules[questionType]}
     "acceptableAnswers": ["关键词1"],
     "explanation": "解析",
     "difficulty": "${difficulty}",
-    "points": ${pointsMap[questionType] || 5}
+    "points": ${pointsMap[questionType] || 5},
+    "examPoint": "考察的考点名称"
   }
 ]
 
@@ -837,7 +883,7 @@ ${typeSpecificRules[questionType]}
       { role: 'system', content: systemPrompt },
       { role: 'user', content: `课程名称：${courseName}\n\n课件内容：\n${courseText.slice(0, 6000)}` },
     ],
-    { temperature: 0.5, maxTokens, retries: 3 }
+    { temperature: 0.6, maxTokens, retries: 3 }
   )
 
   try {
@@ -857,9 +903,8 @@ ${typeSpecificRules[questionType]}
       // 只有选择题才保留 options
       if (cleaned.type === 'choice' || cleaned.type === 'multi') {
         if (q.options && Array.isArray(q.options)) {
-          // 去除选项内容中可能已有的 A. B. C. D. 前缀
           cleaned.options = q.options.map((opt: string) =>
-            typeof opt === 'string' ? opt.replace(/^[A-Z][.、．]\s*/i, '').trim() : String(opt)
+            typeof opt === 'string' ? opt.replace(/^[A-Z][.、．)]\s*/i, '').trim() : String(opt)
           )
         }
         if (cleaned.type === 'choice' && q.correctIndex !== undefined) {

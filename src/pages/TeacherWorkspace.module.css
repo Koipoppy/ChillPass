@@ -163,6 +163,71 @@
   gap: 8px;
 }
 
+/* 数量选择器 */
+.countRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.countBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-sm);
+  background: var(--glass-bg);
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.countBtn:hover:not(:disabled) {
+  border-color: var(--accent-text);
+  background: rgba(0, 113, 227, 0.08);
+}
+
+.countBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.countInput {
+  width: 64px;
+  height: 36px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-sm);
+  background: var(--glass-bg);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.countInput:focus {
+  border-color: var(--accent-text);
+}
+
+.countInput::-webkit-inner-spin-button,
+.countInput::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.countHint {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
 .optionBtn {
   display: inline-flex;
   align-items: center;
@@ -619,7 +684,9 @@ select.textInput {
 /* ===== 暗色模式 ===== */
 [data-theme="dark"] .courseChip,
 [data-theme="dark"] .optionBtn,
-[data-theme="dark"] .textInput {
+[data-theme="dark"] .textInput,
+[data-theme="dark"] .countBtn,
+[data-theme="dark"] .countInput {
   border-color: rgba(255, 255, 255, 0.12);
 }
 

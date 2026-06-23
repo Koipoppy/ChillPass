@@ -36,6 +36,22 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+[data-theme="dark"] .groupHeader {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .groupHeader:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="codex"] .groupHeader {
+  background: rgba(240, 246, 252, 0.03);
+}
+
+[data-theme="codex"] .groupHeader:hover {
+  background: rgba(240, 246, 252, 0.05);
+}
+
 /* ===== 头部 ===== */
 .header {
   margin-bottom: 24px;
@@ -129,7 +145,7 @@
 /* ===== 单个关卡行 ===== */
 .lessonRow {
   display: flex;
-  align-items: stretch;
+  align-items: flex-start;
   gap: 16px;
   width: 100%;
   padding: 0;
@@ -229,9 +245,10 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   gap: 4px;
-  padding: 8px 0;
+  /* padding-top 让标题与圆圈中心对齐：圆圈 56px，meta 行约 22px + gap 4px */
+  padding-top: 17px;
+  padding-bottom: 8px;
   min-width: 0;
 }
 
@@ -319,6 +336,83 @@
 .skipBtn:hover {
   background: rgba(0, 122, 255, 0.08);
   border-color: rgba(0, 122, 255, 0.4);
+}
+
+/* "接下来做" 徽章 */
+.nextBadge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.08));
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  white-space: nowrap;
+  transition: opacity 1s ease, transform 1s ease;
+}
+
+.nextBadgeVisible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.nextBadgeHidden {
+  opacity: 0;
+  transform: scale(0.85);
+}
+
+/* "接下来做" 行高亮 — 仅保留徽章，无黄色边框 */
+.lessonRowNext {
+  position: relative;
+}
+
+/* 分组标题 */
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.03);
+  transition: background 0.2s ease;
+}
+
+.groupHeader:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.groupTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.groupCount {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.groupDoneTag {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: rgba(52, 199, 89, 0.12);
+  color: var(--success-text);
 }
 
 /* ===== 空状态 ===== */

@@ -308,7 +308,7 @@ export const useCourseStore = create<CourseState>()(
         const bundle = state.courses.find(b => b.course.id === state.currentCourseId)
         if (!bundle) return
         const lesson = bundle.lessons.find(l => l.id === lessonId)
-        if (!lesson || lesson.status === 'completed') return
+        if (!lesson || lesson.status === 'completed' || lesson.status === 'available') return
 
         const cost = typeof lesson.coins === 'number' ? lesson.coins : 30
         const currentCoins = typeof bundle.progress.chillCoins === 'number' ? bundle.progress.chillCoins : 0
@@ -319,9 +319,8 @@ export const useCourseStore = create<CourseState>()(
         set(s => updateCurrentBundle(s, b => {
           const updatedLessons = b.lessons.map(l => {
             if (l.id === lessonId) {
-              return { ...l, status: 'completed' as const, completedAt: Date.now() }
-            }
-            if (l.order === lesson.order + 1 && l.status === 'locked') {
+              // 解锁：状态变为 available，不是 completed
+              // 只解锁这一关，下一关在完成本关后自动解锁
               return { ...l, status: 'available' as const }
             }
             return l
@@ -333,7 +332,7 @@ export const useCourseStore = create<CourseState>()(
             lessons: updatedLessons,
             progress: {
               ...b.progress,
-              completedLessons: b.progress.completedLessons + 1,
+              // 解锁不增加 completedLessons，只消耗 Chill币
               chillCoins: Math.max(0, coins - cost),
             },
           }
