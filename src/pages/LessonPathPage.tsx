@@ -162,9 +162,10 @@ export default function LessonPathPage() {
 
                   const handleSkip = (e: React.MouseEvent) => {
                     e.stopPropagation()
-                    const currentCoins = progress?.chillCoins ?? 0
-                    if (currentCoins < lesson.coins) {
-                      alert(`Chill币不足，需要 ${lesson.coins} 枚`)
+                    const currentCoins = typeof progress?.chillCoins === 'number' ? progress.chillCoins : 0
+                    const cost = typeof lesson.coins === 'number' ? lesson.coins : 30
+                    if (currentCoins < cost) {
+                      alert(`Chill币不足，需要 ${cost} 枚`)
                       return
                     }
                     try {

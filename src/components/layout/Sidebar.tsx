@@ -1,7 +1,9 @@
 import { NavLink } from 'react-router-dom'
-import { Home, Upload, BookOpen, BookX, MessageCircle, Settings } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Home, Upload, BookOpen, BookX, MessageCircle, Settings, Briefcase } from 'lucide-react'
 import styles from './Sidebar.module.css'
 import { useCourseStore, useCurrentBundle } from '@stores/courseStore'
+import { useSettingsStore } from '@stores/settingsStore'
 import { useT } from '../../i18n'
 import type { TranslationKey } from '../../i18n'
 
@@ -18,7 +20,22 @@ export default function Sidebar() {
   const bundle = useCurrentBundle()
   const course = bundle?.course
   const progress = bundle?.progress
+  const isTeacher = useSettingsStore(s => s.isTeacher)
   const t = useT()
+
+  const prevCoinsRef = useRef(progress?.chillCoins ?? 0)
+  const [coinBounce, setCoinBounce] = useState(false)
+  const currentCoins = typeof progress?.chillCoins === 'number' ? progress.chillCoins : 0
+
+  useEffect(() => {
+    if (currentCoins > prevCoinsRef.current) {
+      setCoinBounce(true)
+      const timer = setTimeout(() => setCoinBounce(false), 600)
+      prevCoinsRef.current = currentCoins
+      return () => clearTimeout(timer)
+    }
+    prevCoinsRef.current = currentCoins
+  }, [currentCoins])
 
   return (
     <aside className={styles.sidebar}>
@@ -46,6 +63,17 @@ export default function Sidebar() {
               </NavLink>
             )
           })}
+          {isTeacher && (
+            <NavLink
+              to="/teacher"
+              className={({ isActive }) =>
+                `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
+              }
+            >
+              <Briefcase size={20} strokeWidth={1.8} />
+              <span>工作台</span>
+            </NavLink>
+          )}
         </nav>
 
         {/* 课程进度卡片 */}
@@ -68,7 +96,7 @@ export default function Sidebar() {
                 }}
               />
             </div>
-            <div className={styles.progressCoins}>
+            <div className={`${styles.progressCoins} ${coinBounce ? styles.coinBounce : ''}`}>
               <span style={{ color: 'var(--success-text)' }}>{progress!.chillCoins ?? 0} Chill币</span>
               {bundle!.generatingLessons && (
                 <span className={styles.generatingBadge}>{t('nav.generating')}</span>

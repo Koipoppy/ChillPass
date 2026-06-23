@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Clock, Maximize2, Minimize2 } from 'lucide-react'
 import { useStudyTimeStore, formatStudyTime } from '@stores/studyTimeStore'
+import { useT } from '../../i18n'
 import styles from './TitleBar.module.css'
 
 /**
@@ -12,6 +13,7 @@ export default function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false)
   const [isFocusMode, setIsFocusMode] = useState(false)
   const [, setTick] = useState(0)
+  const t = useT()
 
   const totalSeconds = useStudyTimeStore(s => s.totalSeconds)
   const sessionStart = useStudyTimeStore(s => s.sessionStart)
@@ -93,8 +95,8 @@ export default function TitleBar() {
           className={styles.light}
           style={{ '--light-color': '#ff5f57' } as React.CSSProperties}
           onClick={handleClose}
-          title="关闭"
-          aria-label="关闭窗口"
+          title={t('titlebar.close')}
+          aria-label={t('titlebar.close')}
         >
           <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
             <path d="M1.5 1.5L6.5 6.5M6.5 1.5L1.5 6.5" stroke="#000" strokeWidth="1.2" strokeLinecap="round" opacity="0.5" />
@@ -104,8 +106,8 @@ export default function TitleBar() {
           className={styles.light}
           style={{ '--light-color': '#febc2e' } as React.CSSProperties}
           onClick={handleMinimize}
-          title="最小化"
-          aria-label="最小化窗口"
+          title={t('titlebar.minimize')}
+          aria-label={t('titlebar.minimize')}
         >
           <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
             <path d="M1.5 4H6.5" stroke="#000" strokeWidth="1.2" strokeLinecap="round" opacity="0.5" />
@@ -135,17 +137,17 @@ export default function TitleBar() {
         <button
           className={`${styles.focusBtn} ${isFocusMode ? styles.focusBtnActive : ''}`}
           onClick={handleFocusToggle}
-          title={isFocusMode ? '退出专注模式' : '进入专注模式'}
+          title={isFocusMode ? t('titlebar.exitFocus') : t('titlebar.focusMode')}
         >
           {isFocusMode ? (
             <>
               <Minimize2 size={13} strokeWidth={2} />
-              <span>退出专注</span>
+              <span>{t('titlebar.exitFocus')}</span>
             </>
           ) : (
             <>
               <Maximize2 size={13} strokeWidth={2} />
-              <span>专注</span>
+              <span>{t('titlebar.focusMode')}</span>
             </>
           )}
         </button>

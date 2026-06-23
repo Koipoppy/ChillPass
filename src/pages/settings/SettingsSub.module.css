@@ -229,8 +229,8 @@
   padding: 12px 24px;
   border: none;
   border-radius: var(--radius-pill);
-  background: var(--text-primary);
-  color: #fff;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
   font-size: 15px;
   font-weight: 600;
   font-family: inherit;
@@ -722,8 +722,8 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
-  color: #fff;
+  background: linear-gradient(135deg, var(--btn-primary-bg), var(--text-secondary));
+  color: var(--btn-primary-fg);
   display: inline-flex;
   align-items: center;
   justify-content: center;

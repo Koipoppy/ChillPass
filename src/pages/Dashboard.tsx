@@ -636,7 +636,7 @@ export default function Dashboard() {
               onClick={() => navigate('/chat')}
             >
               <MessageCircle size={18} strokeWidth={1.8} />
-              <span className={styles.quickBtnText}>问 AI 助教</span>
+              <span className={styles.quickBtnText}>问 Athena</span>
               <ArrowRight size={16} strokeWidth={2} />
             </button>
           </div>

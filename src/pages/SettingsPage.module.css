@@ -262,8 +262,8 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
-  color: #fff;
+  background: linear-gradient(135deg, var(--btn-primary-bg), var(--text-secondary));
+  color: var(--btn-primary-fg);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -358,8 +358,8 @@
   padding: 10px 22px;
   border: none;
   border-radius: var(--radius-pill);
-  background: var(--text-primary);
-  color: #fff;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
   font-size: 14px;
   font-weight: 600;
   font-family: inherit;
@@ -483,8 +483,8 @@
 }
 
 .themeOptionActive {
-  background: var(--text-primary);
-  color: #fff;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
 }
 
 .themeOptionActive:hover {
@@ -601,4 +601,42 @@
 
 [data-theme="dark"] .langOption:hover {
   border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ===== 教师身份开关 ===== */
+.teacherToggle {
+  position: relative;
+  width: 52px;
+  height: 30px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  transition: background 0.3s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.teacherToggleActive {
+  background: var(--accent-text);
+}
+
+.teacherToggleThumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.teacherToggleActive .teacherToggleThumb {
+  transform: translateX(22px);
+}
+
+[data-theme="dark"] .teacherToggle {
+  background: rgba(255, 255, 255, 0.15);
 }

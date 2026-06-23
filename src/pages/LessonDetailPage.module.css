@@ -128,8 +128,8 @@
   font-size: 16px;
   font-weight: 600;
   font-family: inherit;
-  color: #ffffff;
-  background: var(--text-primary);
+  color: var(--btn-primary-fg);
+  background: var(--btn-primary-bg);
   border: none;
   border-radius: var(--radius-pill);
   cursor: pointer;
@@ -266,7 +266,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--text-primary);
+  background: var(--btn-primary-bg);
   margin-top: 8px;
   flex-shrink: 0;
 }
@@ -589,8 +589,8 @@
   font-size: 15px;
   font-weight: 600;
   font-family: inherit;
-  color: #ffffff;
-  background: var(--text-primary);
+  color: var(--btn-primary-fg);
+  background: var(--btn-primary-bg);
   border: none;
   border-radius: var(--radius-pill);
   cursor: pointer;
@@ -675,8 +675,8 @@
   font-size: 15px;
   font-weight: 600;
   font-family: inherit;
-  color: #ffffff;
-  background: var(--text-primary);
+  color: var(--btn-primary-fg);
+  background: var(--btn-primary-bg);
   border: none;
   border-radius: var(--radius-pill);
   cursor: pointer;

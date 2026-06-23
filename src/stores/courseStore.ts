@@ -277,6 +277,9 @@ export const useCourseStore = create<CourseState>()(
           const lesson = bundle.lessons.find(l => l.id === lessonId)
           if (!lesson || lesson.status === 'completed') return bundle
 
+          const reward = typeof lesson.coins === 'number' ? lesson.coins : 30
+          const currentCoins = typeof bundle.progress.chillCoins === 'number' ? bundle.progress.chillCoins : 0
+
           const updatedLessons = bundle.lessons.map(l => {
             if (l.id === lessonId) {
               return { ...l, status: 'completed' as const, completedAt: Date.now() }
@@ -293,7 +296,7 @@ export const useCourseStore = create<CourseState>()(
             progress: {
               ...bundle.progress,
               completedLessons: bundle.progress.completedLessons + 1,
-              chillCoins: (bundle.progress.chillCoins ?? 0) + lesson.coins,
+              chillCoins: currentCoins + reward,
             },
           }
         }))
@@ -307,9 +310,10 @@ export const useCourseStore = create<CourseState>()(
         const lesson = bundle.lessons.find(l => l.id === lessonId)
         if (!lesson || lesson.status === 'completed') return
 
-        const currentCoins = bundle.progress.chillCoins ?? 0
-        if (currentCoins < lesson.coins) {
-          throw new Error('Chill币不足，需要 ' + lesson.coins + ' 枚')
+        const cost = typeof lesson.coins === 'number' ? lesson.coins : 30
+        const currentCoins = typeof bundle.progress.chillCoins === 'number' ? bundle.progress.chillCoins : 0
+        if (currentCoins < cost) {
+          throw new Error('Chill币不足，需要 ' + cost + ' 枚')
         }
 
         set(s => updateCurrentBundle(s, b => {
@@ -323,13 +327,14 @@ export const useCourseStore = create<CourseState>()(
             return l
           })
 
+          const coins = typeof b.progress.chillCoins === 'number' ? b.progress.chillCoins : 0
           return {
             ...b,
             lessons: updatedLessons,
             progress: {
               ...b.progress,
               completedLessons: b.progress.completedLessons + 1,
-              chillCoins: (b.progress.chillCoins ?? 0) - lesson.coins,
+              chillCoins: Math.max(0, coins - cost),
             },
           }
         }))
@@ -337,15 +342,19 @@ export const useCourseStore = create<CourseState>()(
 
       addStudyCoins: (minutes) => {
         const coins = Math.floor(minutes)
-        if (coins <= 0) return
-        set(state => updateCurrentBundle(state, bundle => ({
-          ...bundle,
-          progress: {
-            ...bundle.progress,
-            chillCoins: (bundle.progress.chillCoins ?? 0) + coins,
-            totalStudyMinutes: (bundle.progress.totalStudyMinutes ?? 0) + coins,
-          },
-        })))
+        if (!Number.isFinite(coins) || coins <= 0) return
+        set(state => updateCurrentBundle(state, bundle => {
+          const currentCoins = typeof bundle.progress.chillCoins === 'number' ? bundle.progress.chillCoins : 0
+          const currentMinutes = typeof bundle.progress.totalStudyMinutes === 'number' ? bundle.progress.totalStudyMinutes : 0
+          return {
+            ...bundle,
+            progress: {
+              ...bundle.progress,
+              chillCoins: currentCoins + coins,
+              totalStudyMinutes: currentMinutes + coins,
+            },
+          }
+        }))
       },
 
       setExamDate: (date) => {

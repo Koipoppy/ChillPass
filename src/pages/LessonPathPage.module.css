@@ -110,7 +110,7 @@
 
 .progressFill {
   height: 100%;
-  background: var(--text-primary);
+  background: var(--btn-primary-bg);
   border-radius: 3px;
   transition: width 0.5s ease;
 }
@@ -200,8 +200,8 @@
 
 /* 已完成：深色实心 + 白色勾，半透明 */
 .node_completed {
-  background: var(--text-primary);
-  color: #ffffff;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
   opacity: 0.6;
 }
 
@@ -361,8 +361,8 @@
   font-size: 15px;
   font-weight: 600;
   font-family: inherit;
-  color: #ffffff;
-  background: var(--text-primary);
+  color: var(--btn-primary-fg);
+  background: var(--btn-primary-bg);
   border: none;
   border-radius: var(--radius-pill);
   cursor: pointer;

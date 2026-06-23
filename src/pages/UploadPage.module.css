@@ -246,7 +246,7 @@
 
 .progressFill {
   height: 100%;
-  background: var(--text-primary);
+  background: var(--btn-primary-bg);
   border-radius: 3px;
   transition: width 0.4s ease;
 }
@@ -261,8 +261,8 @@
   font-size: 16px;
   font-weight: 600;
   font-family: inherit;
-  color: #ffffff;
-  background: var(--text-primary);
+  color: var(--btn-primary-fg);
+  background: var(--btn-primary-bg);
   border: none;
   border-radius: var(--radius-pill);
   cursor: pointer;

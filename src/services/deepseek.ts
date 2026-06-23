@@ -1,4 +1,4 @@
-import type { ExamPoint, LessonContent, QuizQuestion } from '@types/index'
+import type { ExamPoint, LessonContent, QuizQuestion, ExamQuestion } from '@types/index'
 import { useSettingsStore } from '@stores/settingsStore'
 
 const API_URL = 'https://api.deepseek.com/chat/completions'
@@ -9,36 +9,71 @@ interface ChatMessage {
 }
 
 /**
- * 调用 DeepSeek API（非流式）
+ * 调用 DeepSeek API（非流式），带重试和超时
  */
 async function callDeepSeek(
   messages: ChatMessage[],
-  options?: { temperature?: number; maxTokens?: number }
+  options?: { temperature?: number; maxTokens?: number; retries?: number }
 ): Promise<string> {
   const { apiKey, model } = useSettingsStore.getState()
   if (!apiKey) throw new Error('未设置 API Key，请在设置中配置')
 
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: options?.temperature ?? 0.7,
-      max_tokens: options?.maxTokens ?? 4096,
-    }),
-  })
+  const maxRetries = options?.retries ?? 3
+  const timeoutMs = 90000 // 90 秒超时
 
-  if (!response.ok) {
-    const error = await response.text()
-    throw new Error(`DeepSeek API 错误: ${response.status} - ${error}`)
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: options?.temperature ?? 0.7,
+          max_tokens: options?.maxTokens ?? 4096,
+        }),
+        signal: controller.signal,
+      })
+
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        const error = await response.text()
+        throw new Error(`DeepSeek API 错误: ${response.status} - ${error}`)
+      }
+
+      const data = await response.json()
+      return data.choices[0].message.content
+    } catch (err: any) {
+      clearTimeout(timeoutId)
+
+      if (err.name === 'AbortError') {
+        if (attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, 1000 * attempt))
+          continue
+        }
+        throw new Error('请求超时，请检查网络连接后重试')
+      }
+
+      if (err.message?.includes('Failed to fetch')) {
+        if (attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, 1500 * attempt))
+          continue
+        }
+        throw new Error('网络连接失败，请检查网络后重试')
+      }
+
+      throw err
+    }
   }
 
-  const data = await response.json()
-  return data.choices[0].message.content
+  throw new Error('请求失败，已重试 ' + maxRetries + ' 次')
 }
 
 /**
@@ -575,14 +610,30 @@ export async function regenerateQuizQuestion(
 }
 
 /**
- * AI 助教对话
+ * Athena 智能学伴对话
+ * 具备技能（ability）感知与记忆（charter/flow）感知能力
  */
-export async function* chatWithTutor(
+export async function* chatWithAthena(
   userMessage: string,
   courseContext: string,
-  history: ChatMessage[]
+  history: ChatMessage[],
+  abilities?: { name: string; description: string }[],
+  charterMemories?: string[],
+  flowMemories?: string[],
 ): AsyncGenerator<string> {
-  const systemPrompt = `你是 ChillPass 的 AI 助教，专门帮助大学生备考期末考试。
+  const abilitiesText = abilities && abilities.length > 0
+    ? `\n\n你已掌握的技能：\n${abilities.map(a => `- ${a.name}: ${a.description}`).join('\n')}`
+    : ''
+
+  const charterText = charterMemories && charterMemories.length > 0
+    ? `\n\n【宪章记忆 - 必须遵守】\n${charterMemories.join('\n')}`
+    : ''
+
+  const flowText = flowMemories && flowMemories.length > 0
+    ? `\n\n【流动记忆 - 参考信息】\n${flowMemories.join('\n')}`
+    : ''
+
+  const systemPrompt = `你是 Athena，ChillPass 应用的智能学习助手。你的名字来源于希腊神话中的智慧女神雅典娜。你不仅是一个答疑工具，更是一个有温度、有思想的学伴。
 
 你的特点：
 1. 回答简洁明了，用大白话解释复杂概念
@@ -590,6 +641,8 @@ export async function* chatWithTutor(
 3. 如果学生问"这个会考吗"，根据课件内容分析重要性
 4. 鼓励学生，保持积极正面的态度
 5. 适当使用 Markdown 格式（加粗、列表）让回答更清晰
+6. 数学公式使用 LaTeX 语法（$...$ 或 $$...$$）
+${charterText}${flowText}${abilitiesText}
 
 ${courseContext ? `学生当前课件内容摘要：\n${courseContext.slice(0, 3000)}` : ''}`
 
@@ -600,4 +653,306 @@ ${courseContext ? `学生当前课件内容摘要：\n${courseContext.slice(0, 3
   ]
 
   yield* callDeepSeekStream(messages, { temperature: 0.7 })
+}
+
+/**
+ * Athena 对话后自动总结 ability 和记忆
+ * 返回新发现的技能和记忆
+ */
+export async function summarizeAthenaInsights(
+  userMessage: string,
+  athenaReply: string,
+  existingAbilities: string[],
+): Promise<{ newAbilities: { name: string; description: string }[]; newMemories: string[] }> {
+  const systemPrompt = `你是一个分析器。分析以下 Athena（AI助手）与用户的对话，提取：
+1. 新发现的技能（ability）：Athena 在对话中展现出的能力，例如"论文写作"、"知识点总结"、"解题指导"等。排除已存在的技能。
+2. 需要记住的信息（memory）：用户的偏好、学习习惯、重要事实等。
+
+已存在的技能（不要重复）：${existingAbilities.join('、')}
+
+返回 JSON 格式：
+{
+  "newAbilities": [
+    { "name": "技能名（简洁，2-6字）", "description": "技能描述（一句话）" }
+  ],
+  "newMemories": [
+    "需要记住的信息1",
+    "需要记住的信息2"
+  ]
+}
+
+如果没有新发现，返回空数组。`
+
+  try {
+    const result = await callDeepSeek(
+      [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `用户消息：${userMessage}\n\nAthena回复：${athenaReply}` },
+      ],
+      { temperature: 0.3, maxTokens: 1024 }
+    )
+
+    const jsonMatch = result.match(/\{[\s\S]*\}/)
+    const json = jsonMatch ? jsonMatch[0] : result
+    const parsed = JSON.parse(json)
+    return {
+      newAbilities: parsed.newAbilities || [],
+      newMemories: parsed.newMemories || [],
+    }
+  } catch {
+    return { newAbilities: [], newMemories: [] }
+  }
+}
+
+/**
+ * 执行 Athena 任务（论文代写、报告代写等）
+ */
+export async function* executeTask(
+  taskType: 'paper' | 'report' | 'summary' | 'plan',
+  taskInput: string,
+  courseContext: string,
+  history: ChatMessage[],
+  charterMemories?: string[],
+): AsyncGenerator<string> {
+  const taskConfig = {
+    paper: {
+      title: '论文代写',
+      prompt: '你正在帮助用户撰写一篇学术论文。请根据用户的要求，结合课件知识，撰写结构完整、论证严密的学术论文。包含：标题、摘要、关键词、引言、正文（分章节）、结论、参考文献。使用学术语言，适当引用课件中的知识点。',
+    },
+    report: {
+      title: '报告代写',
+      prompt: '你正在帮助用户撰写一份报告。请根据用户的要求，结合课件知识，撰写格式规范、内容详实的报告。包含：标题、背景/目的、正文（分章节分析）、结论与建议。语言正式但不晦涩。',
+    },
+    summary: {
+      title: '知识总结',
+      prompt: '你正在帮助用户总结知识点。请根据用户的要求，系统性地梳理课件中的核心概念、公式、定理，形成结构化的知识网络。使用表格、列表等格式让总结更清晰。',
+    },
+    plan: {
+      title: '复习计划',
+      prompt: '你正在帮助用户制定复习计划。请根据用户的考试日期和课件内容，制定详细的、可执行的复习计划。按天分配任务，标注重点和难点。',
+    },
+  }
+
+  const config = taskConfig[taskType]
+  const charterText = charterMemories && charterMemories.length > 0
+    ? `\n\n【宪章记忆 - 必须遵守】\n${charterMemories.join('\n')}`
+    : ''
+
+  const systemPrompt = `你是 Athena，现在执行「${config.title}」任务。
+
+${config.prompt}
+${charterText}
+
+${courseContext ? `课件参考内容：\n${courseContext.slice(0, 4000)}` : ''}`
+
+  const messages: ChatMessage[] = [
+    { role: 'system', content: systemPrompt },
+    ...history.slice(-5), // 任务场景保留最近 5 条历史
+    { role: 'user', content: taskInput },
+  ]
+
+  // 与 chatWithAthena 相同的流式实现
+  yield* callDeepSeekStream(messages, { temperature: 0.7 })
+}
+
+/**
+ * AI 助教对话（向后兼容包装，内部委托给 chatWithAthena）
+ */
+export async function* chatWithTutor(
+  userMessage: string,
+  courseContext: string,
+  history: ChatMessage[]
+): AsyncGenerator<string> {
+  yield* chatWithAthena(userMessage, courseContext, history)
+}
+
+/**
+ * 生成试题（教师工作台）
+ */
+export async function generateExamQuestions(
+  courseText: string,
+  courseName: string,
+  questionType: 'choice' | 'multi' | 'fill' | 'short' | 'essay' | 'calculation',
+  count: number,
+  difficulty: 'easy' | 'medium' | 'hard',
+): Promise<ExamQuestion[]> {
+  const typeNames = {
+    choice: '单选题',
+    multi: '多选题',
+    fill: '填空题',
+    short: '简答题',
+    essay: '论述题',
+    calculation: '计算题',
+  }
+  const difficultyText = { easy: '简单', medium: '中等', hard: '困难' }
+
+  const pointsMap: Record<string, number> = {
+    essay: 20,
+    short: 10,
+    calculation: 15,
+    choice: 5,
+    multi: 5,
+    fill: 5,
+  }
+
+  // 根据题型和数量动态调整 maxTokens
+  const maxTokens = Math.min(8192, 1024 * count + 2048)
+
+  const typeSpecificRules: Record<string, string> = {
+    choice: '- 单选题：4个选项，1个正确答案\n- 选项内容不要包含A. B. C. D.等前缀，只写选项内容本身',
+    multi: '- 多选题：4-6个选项，至少2个正确答案\n- 选项内容不要包含A. B. C. D.等前缀，只写选项内容本身',
+    fill: '- 填空题：提供标准答案和可接受答案\n- 不要提供options字段',
+    short: '- 简答题：提供参考答案和关键词\n- 不要提供options字段',
+    essay: '- 论述题：提供参考答案要点和关键词\n- 不要提供options字段',
+    calculation: '- 计算题：提供完整解题步骤（steps数组，每步一个字符串）、最终答案和解析\n- 计算题不要提供options字段\n- 计算题不需要选项',
+  }
+
+  const systemPrompt = `你是一位大学教师，正在出考试题。请根据课件内容生成 ${count} 道${typeNames[questionType]}，难度为${difficultyText[difficulty]}。
+
+要求：
+- 题目必须基于课件内容，不能编造
+- 数学公式使用 LaTeX 语法（$...$ 或 $$...$$）
+${typeSpecificRules[questionType]}
+
+返回 JSON 数组：
+[
+  {
+    "type": "${questionType}",
+    "question": "题目内容",
+    "options": ["选项内容1", "选项内容2", "选项内容3", "选项内容4"],
+    "correctIndex": 0,
+    "answer": "标准答案",
+    "steps": ["步骤1：...", "步骤2：..."],
+    "acceptableAnswers": ["关键词1"],
+    "explanation": "解析",
+    "difficulty": "${difficulty}",
+    "points": ${pointsMap[questionType] || 5}
+  }
+]
+
+注意：只有单选题和多选题才需要options、correctIndex或correctIndices字段，其他题型不要包含这些字段。`
+
+  const result = await callDeepSeek(
+    [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: `课程名称：${courseName}\n\n课件内容：\n${courseText.slice(0, 6000)}` },
+    ],
+    { temperature: 0.5, maxTokens, retries: 3 }
+  )
+
+  try {
+    const jsonMatch = result.match(/\[[\s\S]*\]/)
+    const json = jsonMatch ? jsonMatch[0] : result
+    const parsed = JSON.parse(json)
+    return parsed.map((q: any, i: number) => {
+      const cleaned: any = {
+        id: `exam-q-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
+        type: q.type || questionType,
+        question: q.question || '',
+        explanation: q.explanation || '',
+        difficulty: q.difficulty || difficulty,
+        points: q.points || pointsMap[questionType] || 5,
+      }
+
+      // 只有选择题才保留 options
+      if (cleaned.type === 'choice' || cleaned.type === 'multi') {
+        if (q.options && Array.isArray(q.options)) {
+          // 去除选项内容中可能已有的 A. B. C. D. 前缀
+          cleaned.options = q.options.map((opt: string) =>
+            typeof opt === 'string' ? opt.replace(/^[A-Z][.、．]\s*/i, '').trim() : String(opt)
+          )
+        }
+        if (cleaned.type === 'choice' && q.correctIndex !== undefined) {
+          cleaned.correctIndex = q.correctIndex
+        }
+        if (cleaned.type === 'multi' && q.correctIndices) {
+          cleaned.correctIndices = q.correctIndices
+        }
+      }
+
+      // 填空/简答/论述/计算题保留答案
+      if (q.answer) cleaned.answer = q.answer
+      if (q.acceptableAnswers) cleaned.acceptableAnswers = q.acceptableAnswers
+      if (q.steps) cleaned.steps = q.steps
+
+      return cleaned as ExamQuestion
+    })
+  } catch {
+    return []
+  }
+}
+
+/**
+ * 翻译试题内容到目标语言（用于导出试卷）
+ */
+export async function translateExamQuestions(
+  questions: ExamQuestion[],
+  targetLanguage: string,
+): Promise<ExamQuestion[]> {
+  if (!questions || questions.length === 0) return questions
+
+  const langNames: Record<string, string> = {
+    en: '英文',
+    ja: '日文',
+    ko: '韩文',
+    ru: '俄文',
+  }
+
+  const targetLang = langNames[targetLanguage]
+  if (!targetLang) return questions
+
+  // 将题目内容序列化为紧凑 JSON
+  const compactQuestions = questions.map((q, i) => ({
+    id: q.id,
+    type: q.type,
+    question: q.question,
+    options: q.options,
+    answer: q.answer,
+    steps: q.steps,
+    acceptableAnswers: q.acceptableAnswers,
+    explanation: q.explanation,
+  }))
+
+  const systemPrompt = `你是一位专业翻译。请将以下试题内容翻译为${targetLang}。
+要求：
+- 保持原有 JSON 结构不变
+- 只翻译文本内容，不改变字段名
+- 数学公式保持 LaTeX 原样不翻译
+- 翻译要准确、专业，符合学术用语习惯
+- 返回纯 JSON 数组，不要包含其他内容
+
+原始试题：
+${JSON.stringify(compactQuestions, null, 2)}`
+
+  const result = await callDeepSeek(
+    [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: `请翻译为${targetLang}并返回 JSON 数组` },
+    ],
+    { temperature: 0.3, maxTokens: 8192, retries: 2 }
+  )
+
+  try {
+    const jsonMatch = result.match(/\[[\s\S]*\]/)
+    const json = jsonMatch ? jsonMatch[0] : result
+    const translated = JSON.parse(json)
+
+    // 合并翻译结果到原题目，保留非文本字段
+    return questions.map((origQ, i) => {
+      const trans = translated[i]
+      if (!trans) return origQ
+      return {
+        ...origQ,
+        question: trans.question || origQ.question,
+        options: trans.options || origQ.options,
+        answer: trans.answer || origQ.answer,
+        steps: trans.steps || origQ.steps,
+        acceptableAnswers: trans.acceptableAnswers || origQ.acceptableAnswers,
+        explanation: trans.explanation || origQ.explanation,
+      }
+    })
+  } catch {
+    // 翻译失败，返回原题目
+    return questions
+  }
 }

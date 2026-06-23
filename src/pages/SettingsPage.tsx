@@ -15,13 +15,16 @@ import {
   Sun,
   Moon,
   Monitor,
+  Terminal,
   Globe,
   Check,
+  Briefcase,
 } from 'lucide-react'
 import { useAuthStore } from '@stores/authStore'
 import { useCourseStore } from '@stores/courseStore'
 import { useThemeStore } from '@stores/themeStore'
 import { useLanguageStore, LANGUAGES } from '@stores/languageStore'
+import { useSettingsStore } from '@stores/settingsStore'
 import type { Language } from '@stores/languageStore'
 import { useT } from '../i18n'
 import type { TranslationKey } from '../i18n'
@@ -39,6 +42,8 @@ export default function SettingsPage() {
   const setTheme = useThemeStore(s => s.setTheme)
   const language = useLanguageStore(s => s.language)
   const setLanguage = useLanguageStore(s => s.setLanguage)
+  const isTeacher = useSettingsStore(s => s.isTeacher)
+  const setIsTeacher = useSettingsStore(s => s.setIsTeacher)
   const t = useT()
 
   const [showLogin, setShowLogin] = useState(false)
@@ -290,6 +295,14 @@ export default function SettingsPage() {
               <Monitor size={14} strokeWidth={2} />
               Win95
             </button>
+            <button
+              type="button"
+              className={`${styles.themeOption} ${theme === 'codex' ? styles.themeOptionActive : ''}`}
+              onClick={() => setTheme('codex')}
+            >
+              <Terminal size={14} strokeWidth={2} />
+              Codex
+            </button>
           </div>
         </div>
 
@@ -328,6 +341,20 @@ export default function SettingsPage() {
             </button>
           </div>
         )}
+
+        <div className={styles.appearanceRow}>
+          <span className={styles.appearanceLabel}>
+            <Briefcase size={16} strokeWidth={2} />
+            我是教师
+          </span>
+          <button
+            type="button"
+            className={`${styles.teacherToggle} ${isTeacher ? styles.teacherToggleActive : ''}`}
+            onClick={() => setIsTeacher(!isTeacher)}
+          >
+            <span className={styles.teacherToggleThumb} />
+          </button>
+        </div>
       </section>
 
       {/* 4. 导航卡片网格 */}

@@ -644,3 +644,773 @@
 [data-theme="dark"] .scrollHandleThumb {
   background: rgba(255, 255, 255, 0.4);
 }
+
+/* ===== Athena: Header actions ===== */
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.headerBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.headerBtn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .headerBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.headerBtnLabel {
+  font-size: 12px;
+  min-width: 16px;
+  text-align: center;
+}
+
+.headerTaskBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 113, 227, 0.1);
+  color: var(--accent-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.headerTaskBadge button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 113, 227, 0.2);
+  color: var(--accent-text);
+  cursor: pointer;
+}
+
+/* ===== Athena: Task grid ===== */
+.taskGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.taskCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px;
+  border: 1.5px solid rgba(0, 0, 0, 0.06);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+  text-align: left;
+  min-height: 100px;
+}
+
+.taskCard:hover {
+  border-color: var(--accent-text);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.taskCardActive {
+  border-color: var(--accent-text);
+  background: rgba(0, 113, 227, 0.08);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+}
+
+[data-theme="dark"] .taskCard {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .taskCard:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="win95"] .taskCard {
+  border-radius: 0;
+  border: 2px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+  background: #c0c0c0;
+}
+
+.taskIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.04);
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .taskIcon {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.taskInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.taskTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.taskDesc {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+
+.activeTaskBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 113, 227, 0.1);
+  color: var(--accent-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.activeTaskBadge button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 113, 227, 0.2);
+  color: var(--accent-text);
+  cursor: pointer;
+}
+
+/* ===== Athena: Modal ===== */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px) saturate(180%);
+  -webkit-backdrop-filter: blur(8px) saturate(180%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: modalFadeIn 0.2s ease;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  width: 100%;
+  max-width: 520px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.4) inset;
+  animation: modalSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes modalSlideUp {
+  from { transform: translateY(20px) scale(0.96); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+[data-theme="dark"] .modal {
+  background: rgba(28, 28, 30, 0.85);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+}
+
+[data-theme="vista"] .modal {
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 8px;
+}
+
+[data-theme="win95"] .modal {
+  background: #c0c0c0;
+  border-radius: 0;
+  border: 2px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="dark"] .modalHeader {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="win95"] .modalHeader {
+  background: #000080;
+  border-bottom: none;
+}
+
+[data-theme="win95"] .modalHeader h3,
+[data-theme="win95"] .modalHeader svg {
+  color: #ffffff !important;
+}
+
+.modalTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+}
+
+.modalTitle h3 {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.modalClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modalClose:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .modalClose:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="win95"] .modalClose {
+  border-radius: 0;
+  border: 1px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+  background: #c0c0c0;
+  color: #000;
+}
+
+.modalBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  scrollbar-width: none;
+}
+
+.modalBody::-webkit-scrollbar {
+  display: none;
+}
+
+/* ===== Athena: Panel content ===== */
+.panelContent {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.addForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panelInput {
+  padding: 10px 14px;
+  border: 1.5px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.panelInput:focus {
+  border-color: var(--accent-text);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="dark"] .panelInput {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .panelInput:focus {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="win95"] .panelInput {
+  border-radius: 0;
+  border: 2px solid;
+  border-color: #808080 #ffffff #ffffff #808080;
+  background: #ffffff;
+}
+
+.panelTextarea {
+  padding: 10px 14px;
+  border: 1.5px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.panelTextarea:focus {
+  border-color: var(--accent-text);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="dark"] .panelTextarea {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="win95"] .panelTextarea {
+  border-radius: 0;
+  border: 2px solid;
+  border-color: #808080 #ffffff #ffffff #808080;
+  background: #ffffff;
+}
+
+.panelAddBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent-text);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: all 0.2s ease;
+}
+
+.panelAddBtn:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+[data-theme="win95"] .panelAddBtn {
+  border-radius: 0;
+  border: 2px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+}
+
+.itemList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.emptyHint {
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  padding: 16px;
+}
+
+.abilityItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease;
+}
+
+.abilityItem:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .abilityItem {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .abilityItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="win95"] .abilityItem {
+  border-radius: 0;
+  border: 1px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+  background: #c0c0c0;
+}
+
+.abilityInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.abilityName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.abilityDesc {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.autoTag {
+  display: inline-block;
+  width: fit-content;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 113, 227, 0.1);
+  color: var(--accent-text);
+  font-size: 10px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.itemRemoveBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.itemRemoveBtn:hover {
+  background: rgba(255, 69, 58, 0.1);
+  color: var(--danger-text);
+}
+
+/* ===== Athena: Memory sections ===== */
+.memorySection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.memorySectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+}
+
+.memorySectionHeader h4 {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.memoryCount {
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .memoryCount {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.clearFlowBtn {
+  margin-left: auto;
+  padding: 2px 10px;
+  border: 1px solid rgba(255, 69, 58, 0.3);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--danger-text);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.memoryHint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.memoryItem {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.memoryItem:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .memoryItem {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .memoryItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="win95"] .memoryItem {
+  border-radius: 0;
+  border: 1px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+  background: #c0c0c0;
+}
+
+.memoryCategory {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.memoryContent {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.memoryActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.memoryActions button {
+  padding: 2px 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.memoryActions button:hover {
+  color: var(--text-primary);
+}
+
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.editActions {
+  display: flex;
+  gap: 8px;
+}
+
+.editActions button {
+  padding: 4px 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--accent-text);
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.editActions button:nth-child(2) {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .editActions button:nth-child(2) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ===== Athena: Data actions ===== */
+.dataActions {
+  display: flex;
+  gap: 8px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="dark"] .dataActions {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.dataBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1.5px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dataBtn:hover {
+  border-color: var(--accent-text);
+  color: var(--accent-text);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="dark"] .dataBtn {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="win95"] .dataBtn {
+  border-radius: 0;
+  border: 2px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+  background: #c0c0c0;
+  color: #000;
+}
+
+/* ===== Athena: Status indicator ===== */
+.statusIndicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.04);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .statusIndicator {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #8e8e93;
+  transition: all 0.3s ease;
+}
+
+.status_thinking {
+  background: #f59e0b;
+  animation: statusPulse 1.5s ease-in-out infinite;
+}
+
+.status_tasking {
+  background: #8b5cf6;
+  animation: statusPulse 1.5s ease-in-out infinite;
+}
+
+.status_idle {
+  background: #34c759;
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.statusText {
+  font-size: 12px;
+}
+
+/* ===== Athena: Task form ===== */
+.taskForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.requiredMark {
+  color: #ff3b30;
+  margin-left: 2px;
+}

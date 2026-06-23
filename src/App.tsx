@@ -12,6 +12,7 @@ import LessonDetailPage from './pages/LessonDetailPage'
 import AIChatPage from './pages/AIChatPage'
 import WrongBookPage from './pages/WrongBookPage'
 import SettingsPage from './pages/SettingsPage'
+import TeacherWorkspace from './pages/TeacherWorkspace'
 import ApiSettings from './pages/settings/ApiSettings'
 import StorageSettings from './pages/settings/StorageSettings'
 import DataSettings from './pages/settings/DataSettings'
@@ -82,6 +83,7 @@ export default function App() {
               <Route path="/lessons" element={<AnimatedPage><LessonPathPage /></AnimatedPage>} />
               <Route path="/lessons/:lessonId" element={<AnimatedPage><LessonDetailPage /></AnimatedPage>} />
               <Route path="/chat" element={<AnimatedPage><AIChatPage /></AnimatedPage>} />
+              <Route path="/teacher" element={<AnimatedPage><TeacherWorkspace /></AnimatedPage>} />
               <Route path="/wrongbook" element={<AnimatedPage><WrongBookPage /></AnimatedPage>} />
               <Route path="/settings" element={<AnimatedPage><SettingsPage /></AnimatedPage>} />
               <Route path="/settings/api" element={<AnimatedPage><ApiSettings /></AnimatedPage>} />

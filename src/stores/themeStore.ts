@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-export type Theme = 'light' | 'dark' | 'vista' | 'win95'
+export type Theme = 'light' | 'dark' | 'vista' | 'win95' | 'codex'
 
 interface ThemeState {
   theme: Theme
@@ -47,6 +47,8 @@ function applyTheme(theme: Theme) {
     root.setAttribute('data-theme', 'vista')
   } else if (theme === 'win95') {
     root.setAttribute('data-theme', 'win95')
+  } else if (theme === 'codex') {
+    root.setAttribute('data-theme', 'codex')
   }
   // light = no attribute (default)
 }
