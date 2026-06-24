@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.2.0-blue?style=flat-square" alt="Version" />
+  <img src="https://img.shields.io/badge/version-1.2.2-blue?style=flat-square" alt="Version" />
   <img src="https://img.shields.io/badge/Electron-31.7.7-9FEAF9?style=flat-square&logo=electron" alt="Electron" />
   <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react" alt="React" />
   <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript" alt="TypeScript" />
@@ -23,8 +23,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Koipoppy/ChillPass/releases/tag/v1.2.0">
-    <img src="https://img.shields.io/badge/⬇️_Download-ChillPass%20Setup%201.2.0.exe-blue?style=for-the-badge" alt="Download" />
+  <a href="https://github.com/Koipoppy/ChillPass/releases/tag/v1.2.2">
+    <img src="https://img.shields.io/badge/⬇️_Download-ChillPass%20Setup%201.2.2.exe-blue?style=for-the-badge" alt="Download" />
   </a>
 </p>
 
@@ -34,7 +34,7 @@
 
 ChillPass is a **desktop application** that transforms your course materials (PDF, PPTX, TXT, MD) into a **gamified learning experience**. Upload your lecture slides, and the AI engine automatically extracts exam-critical topics, generates structured lessons with worked examples, and creates adaptive quizzes — all prioritized by how likely each topic is to appear on your exam.
 
-But that's not all. ChillPass v1.2.0 introduces **Athena** — an AI agent that goes beyond Q&A to write papers, generate reports, summarize knowledge, and plan your revision. Plus a **Teacher Workspace** for generating exam papers with AI, exporting to PDF in 5 languages.
+But that's not all. ChillPass v1.2.2 introduces **Athena** — an AI agent that goes beyond Q&A to write papers, generate reports, summarize knowledge, and plan your revision. Plus a **Teacher Workspace** for generating exam papers with AI, exporting to PDF in 5 languages. New in v1.2.1-1.2.2: quiz regenerate & skip, lesson grouping by source file, "Next Up" smart marker, help modal, and refined card layouts.
 
 **How it works:**
 
@@ -64,6 +64,7 @@ Upload Materials → AI Extracts Topics → Generates Quest Levels → You Play 
 | **Batch Processing** | 200+ page PDFs are split into chunks, extracted in parallel, deduplicated, and consolidated — zero content left behind |
 | **Progressive Unlocking** | Complete a level to unlock the next. Each level contains knowledge points, worked examples, and a quiz checkpoint |
 | **Adaptive Quizzes** | One question per page with a progress navigator. Answer wrong? The question regenerates on the same topic until you master it |
+| **Regenerate & Skip** | Stuck on a question? Regenerate a new question on the same topic (free) or skip it for 10 Chill Coins |
 | **Dynamic Difficulty** | Quiz volume scales with topic priority — Must-Know gets 4-5 questions, Good-to-Know gets 2 |
 
 ### 🧠 Six Question Types with AI Grading
@@ -106,14 +107,15 @@ Athena is not just a chatbot. She's a full agent with **abilities**, **memory**,
 A virtual currency that ties studying to tangible rewards:
 
 - **Earn**: Complete quiz levels (30-40 coins) + 1 coin per minute of study time
-- **Spend**: Skip difficult levels at equal cost to their reward
+- **Spend**: Unlock levels (30-40 coins) + Skip quiz questions (10 coins each)
 - **Track**: Real-time balance on dashboard, sidebar, and quest path with bounce animation
 
 ### 📝 Teacher Workspace
 
 A dedicated workspace for educators (enable in Settings → "I am a Teacher"):
 
-- **AI Question Generation** — Generate 6 question types (choice, multi, fill, short, calculation, essay) from course materials with adjustable difficulty and count
+- **AI Question Generation** — Generate 6 question types (choice, multi, fill, short, calculation, essay) from course materials with adjustable difficulty and count (1-50, free input)
+- **Smart Type Matching** — AI analyzes each exam point and generates the most appropriate question type (e.g., calculation for formulas, short answer for concepts)
 - **Smart Grouping** — Questions auto-grouped by type, each group collapsible
 - **Full Content Preview** — Every question displayed in full with KaTeX formula rendering
 - **PDF Export** — Generate professional exam papers with:
@@ -139,13 +141,20 @@ A dedicated workspace for educators (enable in Settings → "I am a Teacher"):
 
 Chinese, English, Russian, Japanese, Korean — switch instantly from settings. 74+ translation keys covering all UI elements.
 
+### ❓ Help System
+
+A circular help button next to the focus mode toggle opens a modal with:
+- **Software introduction** — what ChillPass does and how it works
+- **Quick start guide** — 10 step-by-step tips covering all major features
+- **Developer contact** — GitHub repository and WeChat ID
+
 ---
 
 ## 📦 Installation
 
 ### Download (Recommended)
 
-Go to [Releases](https://github.com/Koipoppy/ChillPass/releases) → Download `ChillPass Setup 1.2.0.exe` → Install.
+Go to [Releases](https://github.com/Koipoppy/ChillPass/releases) → Download `ChillPass Setup 1.2.2.exe` → Install.
 
 > Windows 10/11 (64-bit). Data auto-preserved on updates.
 
@@ -169,7 +178,7 @@ npm run electron:build:win     # Build installer → release/
 
 **3.** Enter **Quest Sprint** → Start from Level 1 → Read key points → Study examples → Pass the quiz
 
-**4.** Earn Chill Coins from quizzes and study time. Use them to skip levels when stuck.
+**4.** Earn Chill Coins from quizzes and study time. Use them to unlock levels or skip difficult quiz questions (10 coins each). Stuck? Regenerate a new question on the same topic for free.
 
 **5.** Open **Athena** → Ask anything, or start a task (paper, report, summary, plan) → Get structured output
 
@@ -233,6 +242,28 @@ src/
 ---
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v1.2.2</strong> — 2026-06-24</summary>
+
+- **Quiz Regenerate & Skip**: Regenerate same-topic questions (free) or skip for 10 Chill Coins
+- **Help Modal**: Circular help button in title bar with software intro, quick start guide, and developer contact
+- **Quiz Card Layout**: Removed fixed min-height, unified spacing with flex gap
+- **Help Modal Fix**: Resolved pointer-events inheritance from title bar drag region
+</details>
+
+<details>
+<summary><strong>v1.2.1</strong> — 2026-06-24</summary>
+
+- **Lesson Grouping**: Lessons grouped by source file with collapsible headers, auto-collapse on full completion
+- **"Next Up" Marker**: Smart badge marking the lesson after the most recently completed one (by timestamp), with auto-scroll and group expansion
+- **Unlock System**: "Skip" renamed to "Unlock", only unlocks target lesson (no cascade), sets status to `available` not `completed`
+- **Upload Flow**: Navigate to home after import, 3-step progress indicator
+- **Quiz Option Fix**: AI prompt examples updated, `cleanOptionText()` regex strips duplicate prefixes
+- **Wrong Book Layout**: `overflow: visible !important` + content height limits with internal scroll
+- **Teacher Workspace**: Free number input (1-50) replacing fixed buttons, smart question type matching
+- **Smart Exam Generation**: AI analyzes exam points for optimal question type, 30% calculation in choice questions
+</details>
 
 <details>
 <summary><strong>v1.2.0</strong> — 2026-06-23</summary>
