@@ -375,7 +375,7 @@
   font-weight: 700;
   color: var(--text-tertiary);
   letter-spacing: 0.04em;
-  margin-bottom: 10px;
+  margin-bottom: 0;
   text-transform: uppercase;
 }
 
@@ -384,7 +384,7 @@
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.5;
-  margin-bottom: 14px;
+  margin-bottom: 0;
 }
 
 .quizOptions {
@@ -476,7 +476,7 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  margin-top: 14px;
+  margin-top: 0;
   padding: 12px 14px;
   border-radius: var(--radius-md);
   font-size: 14px;
@@ -556,9 +556,9 @@
 .quizPageCard {
   border-radius: var(--radius-lg);
   padding: 20px 24px;
-  min-height: 280px;
   display: flex;
   flex-direction: column;
+  gap: 12px;
 }
 
 .quizTypeTag {
@@ -577,8 +577,86 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 16px;
+  margin-top: 0;
   gap: 12px;
+}
+
+.quizNavLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 操作行：左侧按钮 + 右侧提交，两端对齐 */
+.quizActionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 0;
+  flex-wrap: wrap;
+}
+
+.quizActionRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* 重新生成按钮 — 蓝色系，不耗币 */
+.regenerateBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--accent-text);
+  background: rgba(0, 122, 255, 0.06);
+  border: 1px solid rgba(0, 122, 255, 0.2);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.regenerateBtn:hover:not(:disabled) {
+  background: rgba(0, 122, 255, 0.12);
+  border-color: rgba(0, 122, 255, 0.35);
+}
+
+.regenerateBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 跳过按钮 — 橙色系，耗币 */
+.skipBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--warning-text);
+  background: rgba(255, 159, 10, 0.06);
+  border: 1px solid rgba(255, 159, 10, 0.2);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.skipBtn:hover:not(:disabled) {
+  background: rgba(255, 159, 10, 0.12);
+  border-color: rgba(255, 159, 10, 0.35);
+}
+
+.skipBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .quizNavBtn {
@@ -670,7 +748,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  margin-top: 12px;
+  margin-top: 0;
   padding: 10px 24px;
   font-size: 15px;
   font-weight: 600;
@@ -702,7 +780,7 @@
 .feedback {
   padding: 12px 14px;
   border-radius: var(--radius-md);
-  margin-top: 12px;
+  margin-top: 0;
   font-size: 14px;
   line-height: 1.6;
   display: flex;

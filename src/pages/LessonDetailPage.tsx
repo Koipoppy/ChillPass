@@ -11,6 +11,7 @@ import {
   CheckCircle,
   AlertCircle,
   RefreshCw,
+  SkipForward,
 } from 'lucide-react'
 import { useCourseStore, useCurrentBundle } from '@stores/courseStore'
 import { useWrongQuestionStore } from '@stores/wrongQuestionStore'
@@ -72,6 +73,7 @@ export default function LessonDetailPage() {
 
   const completeLesson = useCourseStore(s => s.completeLesson)
   const setLessonContent = useCourseStore(s => s.setLessonContent)
+  const spendCoins = useCourseStore(s => s.spendCoins)
   const addWrongQuestion = useWrongQuestionStore(s => s.addWrongQuestion)
 
   const lesson = lessons.find(l => l.id === lessonId)
@@ -297,7 +299,7 @@ export default function LessonDetailPage() {
     }
   }
 
-  /** 填空/简答题：换一道（重新生成） */
+  /** 重新生成当前题（同知识点，不耗 Chill币） */
   const handleRegenerateQuestion = async () => {
     const q = quizQuestions[quizPage]
     if (!q || !examPoint) return
@@ -310,14 +312,40 @@ export default function LessonDetailPage() {
         rawText
       )
       setQuizQuestions(prev => prev.map((item, i) => (i === quizPage ? newQ : item)))
+      // 重置所有答题状态
       setTextAnswer('')
       setFeedback(null)
       setChoiceSelected(null)
+      setMultiSelected(new Set())
+      setMultiSubmitted(false)
       setRevealed(false)
     } catch {
       setFeedback({ correct: false, text: '题目重新生成失败，请重试' })
     } finally {
       setGrading(false)
+    }
+  }
+
+  /** 跳过当前题（消耗 10 Chill币，直接进入下一题） */
+  const handleSkipQuestion = () => {
+    const SKIP_COST = 10
+    const ok = spendCoins(SKIP_COST)
+    if (!ok) {
+      setError('Chill币不足，跳过需要 10 枚')
+      return
+    }
+    setError(null)
+    // 标记当前题为已解决（允许后续完成关卡）
+    setPageSolved(prev => new Set(prev).add(quizPage))
+    // 如果不是最后一题，进入下一题
+    if (quizPage < quizQuestions.length - 1) {
+      setQuizPage(prev => prev + 1)
+      setTextAnswer('')
+      setFeedback(null)
+      setChoiceSelected(null)
+      setMultiSelected(new Set())
+      setMultiSubmitted(false)
+      setRevealed(false)
     }
   }
 
@@ -630,15 +658,6 @@ export default function LessonDetailPage() {
                                 )
                               })}
                             </div>
-                            {!multiSubmitted && (
-                              <button
-                                className={styles.submitBtn}
-                                onClick={handleMultiSubmit}
-                                disabled={multiSelected.size === 0}
-                              >
-                                提交答案（已选 {multiSelected.size} 项）
-                              </button>
-                            )}
                             {/* 多选题解析 */}
                             {multiSubmitted && (
                               <div
@@ -695,20 +714,83 @@ export default function LessonDetailPage() {
                           />
                         )}
 
-                        {/* 提交按钮（填空/简答） */}
-                        {(qType === 'fill' || qType === 'short') &&
-                          feedback?.correct !== true && (
+                        {/* 操作行：左侧重新生成+跳过，右侧提交答案 */}
+                        <div className={styles.quizActionRow}>
+                          <div className={styles.quizNavLeft}>
+                            {/* 重新生成：同知识点新题，不耗 Chill币 */}
                             <button
-                              className={styles.submitBtn}
-                              onClick={handleSubmitText}
-                              disabled={grading || !textAnswer.trim()}
+                              className={styles.regenerateBtn}
+                              onClick={handleRegenerateQuestion}
+                              disabled={grading}
+                              title="生成同知识点的新题目（不消耗 Chill币）"
                             >
-                              {grading && (
-                                <Loader size={16} className={styles.submitSpinner} />
+                              {grading ? (
+                                <Loader size={14} className={styles.submitSpinner} />
+                              ) : (
+                                <RefreshCw size={14} strokeWidth={2} />
                               )}
-                              {grading ? '评阅中...' : '提交'}
+                              <span>重新生成</span>
                             </button>
-                          )}
+                            {/* 跳过：消耗 10 Chill币 直接进入下一题 */}
+                            <button
+                              className={styles.skipBtn}
+                              onClick={handleSkipQuestion}
+                              disabled={grading}
+                              title="消耗 10 Chill币 跳到下一题"
+                            >
+                              <SkipForward size={14} strokeWidth={2} />
+                              <span>跳过 (10币)</span>
+                            </button>
+                            {/* 答错后的再试一次 */}
+                            {qType === 'choice' &&
+                              revealed &&
+                              choiceSelected !== q.correctIndex && (
+                                <button
+                                  className={styles.retryBtn}
+                                  onClick={handleRetryChoice}
+                                >
+                                  <RefreshCw size={14} strokeWidth={2} />
+                                  <span>再试一次</span>
+                                </button>
+                              )}
+                            {qType === 'multi' &&
+                              multiSubmitted && (
+                                <button
+                                  className={styles.retryBtn}
+                                  onClick={handleRetryMulti}
+                                >
+                                  <RefreshCw size={14} strokeWidth={2} />
+                                  <span>再试一次</span>
+                                </button>
+                              )}
+                          </div>
+                          <div className={styles.quizActionRight}>
+                            {/* 多选提交 */}
+                            {qType === 'multi' && !multiSubmitted && (
+                              <button
+                                className={styles.submitBtn}
+                                onClick={handleMultiSubmit}
+                                disabled={multiSelected.size === 0}
+                              >
+                                提交答案（已选 {multiSelected.size} 项）
+                              </button>
+                            )}
+                            {/* 填空/简答提交 */}
+                            {(qType === 'fill' || qType === 'short') &&
+                              feedback?.correct !== true && (
+                                <button
+                                  className={styles.submitBtn}
+                                  onClick={handleSubmitText}
+                                  disabled={grading || !textAnswer.trim()}
+                                >
+                                  {grading && (
+                                    <Loader size={16} className={styles.submitSpinner} />
+                                  )}
+                                  {grading ? '评阅中...' : '提交'}
+                                </button>
+                              )}
+                          </div>
+                        </div>
 
                         {/* 反馈（填空/简答） */}
                         {feedback && (
@@ -760,43 +842,9 @@ export default function LessonDetailPage() {
                           </div>
                         )}
 
-                        {/* 导航 */}
+                        {/* 导航：下一题 / 完成关卡 */}
                         <div className={styles.quizNav}>
-                          <div>
-                            {qType === 'choice' &&
-                              revealed &&
-                              choiceSelected !== q.correctIndex && (
-                                <button
-                                  className={styles.retryBtn}
-                                  onClick={handleRetryChoice}
-                                >
-                                  <RefreshCw size={14} strokeWidth={2} />
-                                  <span>再试一次</span>
-                                </button>
-                              )}
-                            {qType === 'multi' &&
-                              multiSubmitted && (
-                                <button
-                                  className={styles.retryBtn}
-                                  onClick={handleRetryMulti}
-                                >
-                                  <RefreshCw size={14} strokeWidth={2} />
-                                  <span>再试一次</span>
-                                </button>
-                              )}
-                            {(qType === 'fill' || qType === 'short') &&
-                              feedback &&
-                              !feedback.correct && (
-                                <button
-                                  className={styles.retryBtn}
-                                  onClick={handleRegenerateQuestion}
-                                  disabled={grading}
-                                >
-                                  <RefreshCw size={14} strokeWidth={2} />
-                                  <span>换一道</span>
-                                </button>
-                              )}
-                          </div>
+                          <div />
                           <div>
                             {isSolved && !isLastPage && (
                               <button

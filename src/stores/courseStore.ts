@@ -44,6 +44,8 @@ interface CourseState {
   skipLesson: (lessonId: string) => void
   /** 学习时长换算 Chill币（1 分钟 = 1 枚） */
   addStudyCoins: (minutes: number) => void
+  /** 消耗 Chill币（小测跳过等），余额不足返回 false */
+  spendCoins: (amount: number) => boolean
   setExamDate: (date: string) => void
   resetCourse: () => void
   /** 批量更新文件路径（资源迁移后调用） */
@@ -354,6 +356,24 @@ export const useCourseStore = create<CourseState>()(
             },
           }
         }))
+      },
+
+      spendCoins: (amount) => {
+        if (!Number.isFinite(amount) || amount <= 0) return false
+        const state = get()
+        if (!state.currentCourseId) return false
+        const bundle = state.courses.find(b => b.course.id === state.currentCourseId)
+        if (!bundle) return false
+        const currentCoins = typeof bundle.progress.chillCoins === 'number' ? bundle.progress.chillCoins : 0
+        if (currentCoins < amount) return false
+        set(s => updateCurrentBundle(s, b => ({
+          ...b,
+          progress: {
+            ...b.progress,
+            chillCoins: Math.max(0, currentCoins - amount),
+          },
+        })))
+        return true
       },
 
       setExamDate: (date) => {
